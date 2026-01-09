@@ -76,6 +76,7 @@ omit = [
     "*/_path_init.py",
     "*/ui.py",
     "*/peak_ui/**/*.py",
+    "*/log/core/*",
 ]
 
 [tool.coverage.run]
@@ -94,6 +95,7 @@ omit = [
     "*/_path_init.py",
     "*/ui.py",
     "*/peak_ui/**/*.py",
+    "*/log/core/*",
 ]
 
 [tool.pylint]
