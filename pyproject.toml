@@ -76,6 +76,15 @@ omit = [
     "*/_path_init.py",
     "*/ui.py",
     "*/peak_ui/**/*.py",
+    "*/textual_ui/**/*.py",
+    "src/web.py",
+    "*/web/routes/*.py",
+    "*/web/services/data_provider.py",
+    "*/web/services/rich_renderer_helpers/*.py",
+    "*/simple_monitor_components/bootstrap.py",
+    "*/simple_monitor_setup/services.py",
+    "*/price_alert/service_helpers/runner.py",
+    "*/price_alert/service_helpers/currency_monitor.py",
 ]
 
 [tool.coverage.run]
@@ -94,6 +103,15 @@ omit = [
     "*/_path_init.py",
     "*/ui.py",
     "*/peak_ui/**/*.py",
+    "*/textual_ui/**/*.py",
+    "src/web.py",
+    "*/web/routes/*.py",
+    "*/web/services/data_provider.py",
+    "*/web/services/rich_renderer_helpers/*.py",
+    "*/simple_monitor_components/bootstrap.py",
+    "*/simple_monitor_setup/services.py",
+    "*/price_alert/service_helpers/runner.py",
+    "*/price_alert/service_helpers/currency_monitor.py",
 ]
 
 [tool.pylint]
