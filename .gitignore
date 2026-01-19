@@ -87,3 +87,6 @@ Thumbs.db
 # xci automation artifacts
 .xci/
 .xci.log
+
+# CI check marker (auto-generated)
+.ci_check_marker
