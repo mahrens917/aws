@@ -126,19 +126,17 @@ class TestMainReturnCode:
 class TestExploreWithSuccessfulConnection:
     """Tests for successful Aurora database connection."""
 
-    @patch("cost_toolkit.scripts.rds.explore_aurora_data.PSYCOPG2_AVAILABLE", True)
     @patch("cost_toolkit.scripts.rds.explore_aurora_data._load_aurora_settings")
-    def test_explore_with_successful_connection(self, mock_load):
+    @patch("cost_toolkit.scripts.rds.explore_aurora_data._resolve_psycopg2")
+    def test_explore_with_successful_connection(self, mock_resolve, mock_load):
         """Test explore_aurora_database with successful database connection."""
-        import sys  # pylint: disable=import-outside-toplevel
-
         mock_psycopg2 = mock.Mock()
         mock_connection = mock.Mock()
         mock_cursor = mock.Mock()
         mock_psycopg2.connect.return_value = mock_connection
         mock_connection.cursor.return_value = mock_cursor
 
-        sys.modules["psycopg2"] = mock_psycopg2
+        mock_resolve.return_value = mock_psycopg2
         mock_load.return_value = ("localhost", 5432, "testdb", "admin", "password")
 
         with patch(f"{EXPLORE_MODULE}.print_database_version_info"):
@@ -150,8 +148,6 @@ class TestExploreWithSuccessfulConnection:
                                 with patch(f"{EXPLORE_MODULE}.get_database_size"):
                                     with patch(f"{EXPLORE_MODULE}.list_functions"):
                                         result = explore_aurora_data.explore_aurora_database()
-
-        del sys.modules["psycopg2"]
 
         assert result is True
         mock_connection.close.assert_called_once()
@@ -161,22 +157,18 @@ class TestExploreWithSuccessfulConnection:
 class TestExploreWithConnectionError:
     """Tests for Aurora database connection failures."""
 
-    @patch("cost_toolkit.scripts.rds.explore_aurora_data.PSYCOPG2_AVAILABLE", True)
     @patch("cost_toolkit.scripts.rds.explore_aurora_data._load_aurora_settings")
-    def test_explore_connection_error(self, mock_load, capsys):
+    @patch("cost_toolkit.scripts.rds.explore_aurora_data._resolve_psycopg2")
+    def test_explore_connection_error(self, mock_resolve, mock_load, capsys):
         """Test explore_aurora_database with connection error."""
-        import sys  # pylint: disable=import-outside-toplevel
-
         mock_psycopg2 = mock.Mock()
         mock_psycopg2.Error = Exception
         mock_psycopg2.connect.side_effect = Exception("Connection failed")
 
-        sys.modules["psycopg2"] = mock_psycopg2
+        mock_resolve.return_value = mock_psycopg2
         mock_load.return_value = ("localhost", 5432, "testdb", "admin", "password")
 
         result = explore_aurora_data.explore_aurora_database()
-
-        del sys.modules["psycopg2"]
 
         assert result is False
         captured = capsys.readouterr()
@@ -186,19 +178,17 @@ class TestExploreWithConnectionError:
 class TestExploreEmptyDatabase:
     """Tests for Aurora database exploration with no data."""
 
-    @patch("cost_toolkit.scripts.rds.explore_aurora_data.PSYCOPG2_AVAILABLE", True)
     @patch("cost_toolkit.scripts.rds.explore_aurora_data._load_aurora_settings")
-    def test_explore_with_empty_database(self, mock_load, capsys):
+    @patch("cost_toolkit.scripts.rds.explore_aurora_data._resolve_psycopg2")
+    def test_explore_with_empty_database(self, mock_resolve, mock_load, capsys):
         """Test explore_aurora_database when database has no tables."""
-        import sys  # pylint: disable=import-outside-toplevel
-
         mock_psycopg2 = mock.Mock()
         mock_connection = mock.Mock()
         mock_cursor = mock.Mock()
         mock_psycopg2.connect.return_value = mock_connection
         mock_connection.cursor.return_value = mock_cursor
 
-        sys.modules["psycopg2"] = mock_psycopg2
+        mock_resolve.return_value = mock_psycopg2
         mock_load.return_value = ("localhost", 5432, "testdb", "admin", "password")
 
         with patch(f"{EXPLORE_MODULE}.print_database_version_info"):
@@ -211,8 +201,6 @@ class TestExploreEmptyDatabase:
                                     with patch(f"{EXPLORE_MODULE}.list_functions"):
                                         result = explore_aurora_data.explore_aurora_database()
 
-        del sys.modules["psycopg2"]
-
         assert result is True
         captured = capsys.readouterr()
         assert "empty" in captured.out.lower() or "no user data" in captured.out.lower()
@@ -221,19 +209,17 @@ class TestExploreEmptyDatabase:
 class TestExploreWithData:
     """Tests for Aurora database exploration with populated data."""
 
-    @patch("cost_toolkit.scripts.rds.explore_aurora_data.PSYCOPG2_AVAILABLE", True)
     @patch("cost_toolkit.scripts.rds.explore_aurora_data._load_aurora_settings")
-    def test_explore_with_data_in_database(self, mock_load, capsys):
+    @patch("cost_toolkit.scripts.rds.explore_aurora_data._resolve_psycopg2")
+    def test_explore_with_data_in_database(self, mock_resolve, mock_load, capsys):
         """Test explore_aurora_database when database contains data."""
-        import sys  # pylint: disable=import-outside-toplevel
-
         mock_psycopg2 = mock.Mock()
         mock_connection = mock.Mock()
         mock_cursor = mock.Mock()
         mock_psycopg2.connect.return_value = mock_connection
         mock_connection.cursor.return_value = mock_cursor
 
-        sys.modules["psycopg2"] = mock_psycopg2
+        mock_resolve.return_value = mock_psycopg2
         mock_load.return_value = ("localhost", 5432, "testdb", "admin", "password")
 
         with patch(f"{EXPLORE_MODULE}.print_database_version_info"):
@@ -245,8 +231,6 @@ class TestExploreWithData:
                                 with patch(f"{EXPLORE_MODULE}.get_database_size"):
                                     with patch(f"{EXPLORE_MODULE}.list_functions"):
                                         result = explore_aurora_data.explore_aurora_database()
-
-        del sys.modules["psycopg2"]
 
         assert result is True
         captured = capsys.readouterr()
