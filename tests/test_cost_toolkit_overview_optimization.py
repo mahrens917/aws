@@ -264,8 +264,8 @@ def test_check_old_snapshots_client_error():
             _check_old_snapshots()
 
 
-def test_check_old_snapshots_missing_volume_size():
-    """Test _check_old_snapshots handles snapshots without VolumeSize."""
+def test_check_old_snapshots_single_old_snapshot():
+    """Test _check_old_snapshots detects a single old snapshot."""
     with patch("cost_toolkit.overview.optimization.get_all_aws_regions") as mock_regions:
         with patch("boto3.client") as mock_client:
             mock_ec2 = MagicMock()
@@ -273,7 +273,7 @@ def test_check_old_snapshots_missing_volume_size():
 
             mock_ec2.describe_snapshots.return_value = {
                 "Snapshots": [
-                    {"SnapshotId": "snap-1", "StartTime": old_date},  # No VolumeSize
+                    {"SnapshotId": "snap-1", "StartTime": old_date, "VolumeSize": 100},
                 ]
             }
             mock_client.return_value = mock_ec2

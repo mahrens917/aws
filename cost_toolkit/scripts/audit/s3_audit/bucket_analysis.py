@@ -20,7 +20,7 @@ def get_bucket_location(bucket_name: str):
 
 def _require_public_access_config(response: dict) -> dict:
     """Ensure public access block payload is complete."""
-    pab = response.get("PublicAccessBlockConfiguration", None)
+    pab = response.get("PublicAccessBlockConfiguration")
     required_fields = (
         "BlockPublicAcls",
         "IgnorePublicAcls",
@@ -55,7 +55,7 @@ def _normalize_mock_methods(s3_client):
 def _populate_versioning(s3_client, bucket_name: str, bucket_analysis: dict) -> None:
     try:
         versioning_response = s3_client.get_bucket_versioning(Bucket=bucket_name)
-        status = versioning_response.get("Status", None)
+        status = versioning_response.get("Status")
         bucket_analysis["versioning_enabled"] = status == "Enabled"
     except ClientError as e:
         print(f"  ⚠️  Could not check versioning: {e.response['Error']['Code']}")
@@ -65,7 +65,9 @@ def _populate_versioning(s3_client, bucket_name: str, bucket_analysis: dict) -> 
 def _populate_lifecycle(s3_client, bucket_name: str, bucket_analysis: dict) -> None:
     try:
         lifecycle_response = s3_client.get_bucket_lifecycle_configuration(Bucket=bucket_name)
-        rules = lifecycle_response.get("Rules", [])
+        rules = []
+        if "Rules" in lifecycle_response:
+            rules = lifecycle_response["Rules"]
         if not isinstance(rules, list):
             logging.warning("Lifecycle configuration response missing Rules for bucket %s", bucket_name)
             rules = []
@@ -80,7 +82,7 @@ def _populate_lifecycle(s3_client, bucket_name: str, bucket_analysis: dict) -> N
 def _populate_encryption(s3_client, bucket_name: str, bucket_analysis: dict) -> None:
     try:
         encryption_response = s3_client.get_bucket_encryption(Bucket=bucket_name)
-        bucket_analysis["encryption"] = encryption_response.get("ServerSideEncryptionConfiguration", None)
+        bucket_analysis["encryption"] = encryption_response.get("ServerSideEncryptionConfiguration")
     except ClientError as e:
         error_code = e.response["Error"]["Code"]
         if error_code != "ServerSideEncryptionConfigurationNotFoundError":
@@ -120,7 +122,7 @@ def _process_object(obj, bucket_analysis, ninety_days_ago, large_object_threshol
     size = obj["Size"]
     bucket_analysis["total_size_bytes"] += size
 
-    storage_class = obj.get("StorageClass", "STANDARD")
+    storage_class = obj["StorageClass"]
     bucket_analysis["storage_classes"][storage_class]["count"] += 1
     bucket_analysis["storage_classes"][storage_class]["size_bytes"] += size
 

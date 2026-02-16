@@ -23,12 +23,12 @@ def delete_health_check(health_check_id):
         try:
             hc_response = route53.get_health_check(HealthCheckId=health_check_id)
             hc_config = hc_response["HealthCheck"]["HealthCheckConfig"]
-            hc_type = hc_config.get("Type", "Unknown")
+            hc_type = hc_config.get("Type")
 
             if hc_type in ["HTTP", "HTTPS"]:
-                fqdn = hc_config.get("FullyQualifiedDomainName", "")
-                port = hc_config.get("Port", "")
-                path = hc_config.get("ResourcePath", "")
+                fqdn = hc_config.get("FullyQualifiedDomainName")
+                port = hc_config.get("Port")
+                path = hc_config.get("ResourcePath")
                 target = f"{hc_type.lower()}://{fqdn}:{port}{path}"
                 print(f"  Target: {target}")
 
@@ -72,8 +72,8 @@ def delete_hosted_zone(zone_name, zone_id):
         records_to_delete = []
 
         for record in records:
-            record_type = record.get("Type", "")
-            record_name = record.get("Name", "")
+            record_type = record.get("Type")
+            record_name = record.get("Name")
 
             # Skip NS and SOA records (these are managed by AWS and can't be deleted)
             if record_type in ["NS", "SOA"]:

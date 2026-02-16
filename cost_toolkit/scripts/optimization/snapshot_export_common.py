@@ -32,7 +32,6 @@ def create_s3_bucket_if_not_exists(s3_client, bucket_name, region, enable_versio
     try:
         s3_client.head_bucket(Bucket=bucket_name)
         print(f"   ✅ S3 bucket {bucket_name} already exists")
-        return True  # noqa: TRY300
     except ClientError:
         try:
             create_s3_bucket_with_region(s3_client, bucket_name, region)
@@ -45,6 +44,8 @@ def create_s3_bucket_if_not_exists(s3_client, bucket_name, region, enable_versio
             print(f"   ❌ Error creating bucket {bucket_name}: {e}")
             return False
 
+        return True
+    else:
         return True
 
 

@@ -1,7 +1,5 @@
 """Cache management for migration state database."""
 
-# ruff: noqa: TRY003 - CLI emits user-focused errors with contextual messages
-
 from __future__ import annotations
 
 import sys

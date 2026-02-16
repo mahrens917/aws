@@ -81,7 +81,9 @@ def _start_stopped_instance(ec2, instance_id):
 
 def _is_related_snapshot(snap, instance_id, attached_volumes):
     """Check if snapshot is related to instance or attached volumes."""
-    description = snap.get("Description", "")
+    if "Description" not in snap:
+        return False
+    description = snap["Description"]
     if instance_id in description:
         return True
     return any(vol["id"] in description for vol in attached_volumes)
@@ -90,7 +92,7 @@ def _is_related_snapshot(snap, instance_id, attached_volumes):
 def _print_snapshot_info(snap):
     """Print snapshot details."""
     snap_id = snap["SnapshotId"]
-    size = snap.get("VolumeSize", 0)
+    size = snap.get("VolumeSize")
     start_time = snap["StartTime"]
     description = snap.get("Description")
     print(f"    {snap_id}: {size} GB, created {start_time}")
@@ -102,7 +104,9 @@ def _analyze_snapshots(ec2, instance_id, attached_volumes):
     print("📸 Related Snapshots Analysis:")
     try:
         snapshots_response = ec2.describe_snapshots(OwnerIds=["sel"])
-        snapshots = snapshots_response.get("Snapshots", [])
+        snapshots = []
+        if "Snapshots" in snapshots_response:
+            snapshots = snapshots_response["Snapshots"]
 
         related_snapshots = [snap for snap in snapshots if _is_related_snapshot(snap, instance_id, attached_volumes)]
 

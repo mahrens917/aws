@@ -7,12 +7,14 @@ from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 
-from cost_toolkit.scripts.setup.verify_iwannabenewyork_domain import (
+from cost_toolkit.scripts.setup.domain_verification_ssl import (
     _find_hosted_zone_for_domain,
-    _print_nameservers,
-    check_route53_configuration,
     check_ssl_certificate,
     verify_canva_verification,
+)
+from cost_toolkit.scripts.setup.verify_iwannabenewyork_domain import (
+    _print_nameservers,
+    check_route53_configuration,
 )
 
 
@@ -21,7 +23,7 @@ class TestCheckSslCertificate:
 
     def test_valid_ssl_certificate(self):
         """Test valid SSL certificate check."""
-        module_path = "cost_toolkit.scripts.setup.verify_iwannabenewyork_domain"
+        module_path = "cost_toolkit.scripts.setup.domain_verification_ssl"
         with (
             patch(f"{module_path}.ssl.create_default_context") as mock_create_ctx,
             patch(f"{module_path}.socket.create_connection") as mock_create_conn,
@@ -55,8 +57,8 @@ class TestCheckSslCertificate:
 
             assert result is True
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.ssl.create_default_context")
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.socket.create_connection")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.ssl.create_default_context")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.socket.create_connection")
     def test_no_certificate_received(self, mock_create_conn, mock_create_ctx, capsys):
         """Test when no certificate is received."""
         mock_socket = MagicMock()
@@ -77,7 +79,7 @@ class TestCheckSslCertificate:
         captured = capsys.readouterr()
         assert "No certificate received" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.socket.create_connection")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.socket.create_connection")
     def test_ssl_certificate_client_error(self, mock_create_conn, capsys):
         """Test SSL certificate check with ClientError."""
         mock_create_conn.side_effect = ClientError({"Error": {"Code": "SSLError", "Message": "SSL error"}}, "connect")
@@ -92,9 +94,9 @@ class TestCheckSslCertificate:
 class TestCanvaVerification:
     """Tests for verify_canva_verification function."""
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.BOTO3_AVAILABLE", True)
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._find_hosted_zone_for_domain")
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.boto3.client")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.BOTO3_AVAILABLE", True)
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._find_hosted_zone_for_domain")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._boto3.client")
     def test_verify_canva_verification_found(self, mock_client, mock_find_zone, capsys):
         """Test Canva verification TXT record found."""
         mock_find_zone.return_value = {"Id": "/hostedzone/Z123", "Name": "example.com."}
@@ -114,9 +116,9 @@ class TestCanvaVerification:
         captured = capsys.readouterr()
         assert "Canva verification TXT record found" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.BOTO3_AVAILABLE", True)
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._find_hosted_zone_for_domain")
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.boto3.client")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.BOTO3_AVAILABLE", True)
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._find_hosted_zone_for_domain")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._boto3.client")
     def test_verify_canva_verification_not_found_no_output(self, mock_client, mock_find_zone, capsys):
         """Test Canva verification TXT record not found."""
         mock_find_zone.return_value = {"Id": "/hostedzone/Z123", "Name": "example.com."}
@@ -128,9 +130,9 @@ class TestCanvaVerification:
         captured = capsys.readouterr()
         assert "No Canva verification TXT record found" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.BOTO3_AVAILABLE", True)
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._find_hosted_zone_for_domain")
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.boto3.client")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.BOTO3_AVAILABLE", True)
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._find_hosted_zone_for_domain")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._boto3.client")
     def test_verify_canva_verification_not_found_error(self, mock_client, mock_find_zone):
         """Test Canva verification when hosted zone is missing."""
         mock_find_zone.return_value = None
@@ -140,9 +142,9 @@ class TestCanvaVerification:
 
         assert result is False
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.BOTO3_AVAILABLE", True)
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._find_hosted_zone_for_domain")
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.boto3.client")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.BOTO3_AVAILABLE", True)
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._find_hosted_zone_for_domain")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl._boto3.client")
     def test_verify_canva_verification_client_error(self, mock_client, mock_find_zone, capsys):
         """Test Canva verification with ClientError."""
         mock_find_zone.return_value = {"Id": "/hostedzone/Z123", "Name": "example.com."}
@@ -233,7 +235,7 @@ class TestCheckRoute53Configuration:
     """Tests for check_route53_configuration function."""
 
     @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.BOTO3_AVAILABLE", True)
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.boto3.client")
+    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._boto3.client")
     @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._find_hosted_zone_for_domain")
     @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._print_nameservers")
     def test_route53_configuration_found(self, _mock_print_ns, mock_find_zone, mock_boto_client, capsys):
@@ -249,7 +251,7 @@ class TestCheckRoute53Configuration:
         assert "Route53 hosted zone found: Z123" in captured.out
 
     @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.BOTO3_AVAILABLE", True)
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.boto3.client")
+    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._boto3.client")
     @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._find_hosted_zone_for_domain")
     def test_route53_configuration_not_found(self, mock_find_zone, mock_boto_client, capsys):
         """Test Route53 configuration when zone not found."""
@@ -273,7 +275,7 @@ class TestCheckRoute53Configuration:
         assert "boto3 not available" in captured.out
 
     @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.BOTO3_AVAILABLE", True)
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.boto3.client")
+    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._boto3.client")
     def test_route53_configuration_client_error(self, mock_boto_client, capsys):
         """Test Route53 check with ClientError."""
         mock_boto_client.side_effect = ClientError({"Error": {"Code": "AccessDenied", "Message": "Access denied"}}, "list_hosted_zones")

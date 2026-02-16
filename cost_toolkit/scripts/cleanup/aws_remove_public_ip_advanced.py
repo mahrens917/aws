@@ -89,7 +89,7 @@ def _verify_and_cleanup(ec2, instance_id, current_eni_id, region_name):
     delay(10)
 
     updated_instance = get_instance_info(instance_id, region_name)
-    new_public_ip = updated_instance.get("PublicIpAddress", None)
+    new_public_ip = updated_instance.get("PublicIpAddress")
 
     if new_public_ip:
         print(f"  ❌ Instance still has public IP: {new_public_ip}")
@@ -181,7 +181,7 @@ def simple_stop_start_without_public_ip(instance_id, region_name):
         # Verify
         delay(10)
         updated_instance = get_instance_info(instance_id, region_name)
-        new_public_ip = updated_instance.get("PublicIpAddress", None)
+        new_public_ip = updated_instance.get("PublicIpAddress")
 
         if new_public_ip:
             print(f"  ❌ Instance still has public IP: {new_public_ip}")

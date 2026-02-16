@@ -192,21 +192,21 @@ class TestBuildInterfaceInfoMinimal:
         """Helper to assert default values for minimal interface data."""
         assert result["interface_id"] == interface_id
         assert result["status"] == status
-        assert result["name"] == "No Name"
-        assert result["type"] == "interface"
+        assert result["name"] is None
+        assert result["type"] is None
 
     def _assert_default_network_values(self, result):
         """Helper to assert default network field values."""
-        assert result["vpc_id"] == "N/A"
-        assert result["subnet_id"] == "N/A"
-        assert result["private_ip"] == "N/A"
-        assert result["public_ip"] == "None"
+        assert result["vpc_id"] is None
+        assert result["subnet_id"] is None
+        assert result["private_ip"] is None
+        assert result["public_ip"] is None
 
     def _assert_default_attachment_values(self, result):
         """Helper to assert default attachment field values."""
-        assert result["attached_to"] == "Not attached"
-        assert result["attachment_status"] == "detached"
-        assert result["description"] == "No description"
+        assert result["attached_to"] is None
+        assert result["attachment_status"] is None
+        assert result["description"] is None
         assert result["tags"] == {}
 
     def test_build_interface_info_minimal_data(self):
@@ -231,7 +231,7 @@ class TestBuildInterfaceInfoMinimal:
 
         result = _build_interface_info(eni)
 
-        assert result["name"] == "No Name"
+        assert result["name"] is None
         assert result["tags"] == {}
 
     def test_build_interface_info_no_public_ip(self):
@@ -244,7 +244,7 @@ class TestBuildInterfaceInfoMinimal:
 
         result = _build_interface_info(eni)
 
-        assert result["public_ip"] == "None"
+        assert result["public_ip"] is None
         assert result["private_ip"] == "10.0.1.10"
 
     def test_build_interface_info_with_attachment_no_instance(self):
@@ -259,7 +259,7 @@ class TestBuildInterfaceInfoMinimal:
 
         result = _build_interface_info(eni)
 
-        assert result["attached_to"] == "Not attached"
+        assert result["attached_to"] is None
         assert result["attachment_status"] == "attached"
 
 

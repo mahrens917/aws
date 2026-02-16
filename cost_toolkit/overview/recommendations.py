@@ -23,9 +23,9 @@ def get_completed_cleanups():
                 if "cleanup_actions" in log_data:
                     cleanup_actions = log_data["cleanup_actions"]
                 for action in cleanup_actions:
-                    status = action.get("status", None)
+                    status = action.get("status")
                     if status == "completed":
-                        service = action.get("service", "")
+                        service = action.get("service")
                         completed_services.add(service.lower())
     except OSError as e:
         print(f"Failed to read cleanup log at {cleanup_log_path}: {e}")

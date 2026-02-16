@@ -21,7 +21,7 @@ class SmokeTestDeps:
     """Shared dependencies passed from migrate_v2."""
 
     config: Any
-    drive_checker_cls: type
+    drive_checker_fn: Callable
     create_migrator: Callable[[], Any]
 
 

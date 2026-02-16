@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from migration_state_managers import FileStateManager
+from migration_state_managers import FileMetadata, FileStateManager
 from tests.assertions import assert_equal
 
 
@@ -19,12 +19,14 @@ def file_mgr(db_conn):
 def test_add_file_inserts_file_record(file_mgr, db_conn):
     """Test adding a file to the database"""
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="path/to/file.txt",
-        size=1024,
-        etag="abc123",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="path/to/file.txt",
+            size=1024,
+            etag="abc123",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -45,21 +47,25 @@ def test_add_file_inserts_file_record(file_mgr, db_conn):
 def test_add_file_is_idempotent(file_mgr, db_conn):
     """Test that adding the same file twice doesn't raise an error"""
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="path/to/file.txt",
-        size=1024,
-        etag="abc123",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="path/to/file.txt",
+            size=1024,
+            etag="abc123",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="path/to/file.txt",
-        size=1024,
-        etag="abc123",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="path/to/file.txt",
+            size=1024,
+            etag="abc123",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -75,12 +81,14 @@ def test_add_file_sets_timestamps(file_mgr, db_conn):
     """Test that created_at and updated_at are set"""
     before_time = datetime.now(timezone.utc).isoformat()
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="file.txt",
-        size=100,
-        etag="def456",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="file.txt",
+            size=100,
+            etag="def456",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
     after_time = datetime.now(timezone.utc).isoformat()
 
@@ -98,12 +106,14 @@ def test_add_file_sets_timestamps(file_mgr, db_conn):
 def test_mark_glacier_restore_requested(file_mgr, db_conn):
     """Test marking a file for glacier restore"""
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="glacier-file.txt",
-        size=5000,
-        etag="ghi789",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="glacier-file.txt",
+            size=5000,
+            etag="ghi789",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.mark_glacier_restore_requested("test-bucket", "glacier-file.txt")
@@ -120,12 +130,14 @@ def test_mark_glacier_restore_requested(file_mgr, db_conn):
 def test_mark_glacier_restored(file_mgr, db_conn):
     """Test marking a file as restored from glacier"""
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="glacier-file.txt",
-        size=5000,
-        etag="ghi789",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="glacier-file.txt",
+            size=5000,
+            etag="ghi789",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.mark_glacier_restore_requested("test-bucket", "glacier-file.txt")
@@ -143,39 +155,47 @@ def test_mark_glacier_restored(file_mgr, db_conn):
 def test_get_glacier_files_needing_restore(file_mgr):
     """Test retrieving Glacier files that need restore"""
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="standard.txt",
-        size=100,
-        etag="std123",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="standard.txt",
+            size=100,
+            etag="std123",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="glacier1.txt",
-        size=1000,
-        etag="glac1",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="glacier1.txt",
+            size=1000,
+            etag="glac1",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="archive1.txt",
-        size=2000,
-        etag="arch1",
-        storage_class="DEEP_ARCHIVE",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="archive1.txt",
+            size=2000,
+            etag="arch1",
+            storage_class="DEEP_ARCHIVE",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="glacier2.txt",
-        size=1500,
-        etag="glac2",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="glacier2.txt",
+            size=1500,
+            etag="glac2",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
     file_mgr.mark_glacier_restore_requested("test-bucket", "glacier2.txt")
 
@@ -192,40 +212,48 @@ def test_get_glacier_files_needing_restore(file_mgr):
 def test_get_files_restoring(file_mgr):
     """Test retrieving files currently being restored"""
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="standard.txt",
-        size=100,
-        etag="std123",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="standard.txt",
+            size=100,
+            etag="std123",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="glacier1.txt",
-        size=1000,
-        etag="glac1",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="glacier1.txt",
+            size=1000,
+            etag="glac1",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="glacier2.txt",
-        size=1500,
-        etag="glac2",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="glacier2.txt",
+            size=1500,
+            etag="glac2",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
     file_mgr.mark_glacier_restore_requested("test-bucket", "glacier2.txt")
 
     file_mgr.add_file(
-        bucket="test-bucket",
-        key="glacier3.txt",
-        size=2000,
-        etag="glac3",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="glacier3.txt",
+            size=2000,
+            etag="glac3",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
     file_mgr.mark_glacier_restore_requested("test-bucket", "glacier3.txt")
     file_mgr.mark_glacier_restored("test-bucket", "glacier3.txt")
@@ -243,21 +271,25 @@ def test_get_files_restoring(file_mgr):
 def test_multiple_buckets_tracked_separately(file_mgr, db_conn):
     """Test that files from different buckets are tracked separately"""
     file_mgr.add_file(
-        bucket="bucket-a",
-        key="file.txt",
-        size=100,
-        etag="abc",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="bucket-a",
+            key="file.txt",
+            size=100,
+            etag="abc",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     file_mgr.add_file(
-        bucket="bucket-b",
-        key="file.txt",
-        size=200,
-        etag="def",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="bucket-b",
+            key="file.txt",
+            size=200,
+            etag="def",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     with db_conn.get_connection() as conn:

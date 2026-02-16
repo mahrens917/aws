@@ -15,15 +15,15 @@ def _build_instance_info(instance, region_name, hourly_cost, monthly_cost):
         "instance_id": instance["InstanceId"],
         "instance_type": instance["InstanceType"],
         "state": instance["State"]["Name"],
-        "launch_time": instance.get("LaunchTime", None),
+        "launch_time": instance.get("LaunchTime"),
         "region": region_name,
         "hourly_cost": hourly_cost,
         "monthly_cost": monthly_cost,
-        "platform": instance.get("Platform", "Linux/UNIX"),
-        "vpc_id": instance.get("VpcId", None),
-        "subnet_id": instance.get("SubnetId", None),
-        "public_ip": instance.get("PublicIpAddress", None),
-        "private_ip": instance.get("PrivateIpAddress", None),
+        "platform": instance.get("Platform"),
+        "vpc_id": instance.get("VpcId"),
+        "subnet_id": instance.get("SubnetId"),
+        "public_ip": instance.get("PublicIpAddress"),
+        "private_ip": instance.get("PrivateIpAddress"),
         "tags": instance.get("Tags") or [],
     }
 
@@ -200,8 +200,8 @@ def _process_single_volume(volume):
     volume_type = volume["VolumeType"]
     size_gb = volume["Size"]
     state = volume["State"]
-    iops = volume.get("Iops", 0)
-    throughput = volume.get("Throughput", 0)
+    iops = volume.get("Iops")
+    throughput = volume.get("Throughput")
 
     monthly_cost = calculate_ebs_monthly_cost(volume_type, size_gb, iops, throughput)
 

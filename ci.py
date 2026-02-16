@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import sys
 
-from ci_tools.ci import main as ci_main  # pylint: disable=import-error,no-name-in-module
+from ci_tools.ci import main as ci_main
 
 
 def run() -> int:

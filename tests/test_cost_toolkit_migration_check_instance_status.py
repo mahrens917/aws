@@ -72,7 +72,7 @@ class TestPrintInstanceInfo:
         _print_instance_info(instance, "i-789")
 
         captured = capsys.readouterr()
-        assert "Launch Time: N/A" in captured.out
+        assert "Launch Time: None" in captured.out
 
 
 class TestCheckUserData:

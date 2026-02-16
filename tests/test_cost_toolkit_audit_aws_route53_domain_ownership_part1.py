@@ -110,8 +110,8 @@ def test_process_single_domain_missing_fields(capsys):  # pylint: disable=unused
     assert result is not None
     assert_equal(result["domain_name"], "test.org")
     assert_equal(result["expiry"], None)
-    assert_equal(result["auto_renew"], False)
-    assert_equal(result["registrar"], "Unknown")
+    assert result["auto_renew"] is None
+    assert result["registrar"] is None
     assert_equal(result["status"], [])
     assert_equal(result["nameservers"], [])
 

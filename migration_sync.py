@@ -5,6 +5,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 from pathlib import Path
+from threading import Event
 from typing import Callable, Iterable
 
 from botocore.exceptions import ClientError
@@ -83,49 +84,40 @@ def _download_object(
     return bytes_downloaded
 
 
-class BucketSyncer:  # pylint: disable=too-few-public-methods
-    """Handles syncing a bucket using boto3 streaming downloads."""
+def sync_bucket(s3, state: MigrationStateV2, base_path: Path, bucket: str, interrupted: Event):
+    """Sync bucket from S3 to local using boto3 downloads."""
+    local_path = base_path / bucket
+    local_path.mkdir(parents=True, exist_ok=True)
+    print(f"  Syncing s3://{bucket} -> {local_path}/")
+    print()
 
-    def __init__(self, s3, state: MigrationStateV2, base_path: Path):
-        self.s3 = s3
-        self.state = state
-        self.base_path = base_path
-        self.interrupted = False
+    progress_state = _ProgressState(start_time=time.time())
+    tracker = ProgressTracker(update_interval=1.0)
 
-    def sync_bucket(self, bucket: str):
-        """Sync bucket from S3 to local using boto3 downloads."""
-        local_path = self.base_path / bucket
-        local_path.mkdir(parents=True, exist_ok=True)
-        print(f"  Syncing s3://{bucket} -> {local_path}/")
-        print()
-
-        progress_state = _ProgressState(start_time=time.time())
-        tracker = ProgressTracker(update_interval=1.0)
-
-        interrupted = False
-        try:
-            for obj in _list_objects(self.s3, bucket):
-                if self.interrupted:
-                    interrupted = True
-                    break
-                key = obj["Key"]
-                dest = local_path / key
-                _download_object(
-                    self.s3,
-                    bucket,
-                    key,
-                    dest,
-                    interrupted_check=lambda: self.interrupted,
-                    progress_state=progress_state,
-                    progress_tracker=tracker,
-                )
-            if not interrupted:
-                _display_progress(progress_state.start_time, progress_state.files_done, progress_state.bytes_done)
-                _print_sync_summary(progress_state.start_time, progress_state.files_done, progress_state.bytes_done)
-        except ClientError as exc:
-            raise RuntimeError(f"Sync failed for bucket {bucket}: {exc}") from exc
-        if interrupted:
-            print("\n✋ Sync interrupted")
+    was_interrupted = False
+    try:
+        for obj in _list_objects(s3, bucket):
+            if interrupted.is_set():
+                was_interrupted = True
+                break
+            key = obj["Key"]
+            dest = local_path / key
+            _download_object(
+                s3,
+                bucket,
+                key,
+                dest,
+                interrupted_check=interrupted.is_set,
+                progress_state=progress_state,
+                progress_tracker=tracker,
+            )
+        if not was_interrupted:
+            _display_progress(progress_state.start_time, progress_state.files_done, progress_state.bytes_done)
+            _print_sync_summary(progress_state.start_time, progress_state.files_done, progress_state.bytes_done)
+    except ClientError as exc:
+        raise RuntimeError(f"Sync failed for bucket {bucket}: {exc}") from exc
+    if was_interrupted:
+        print("\n✋ Sync interrupted")
 
 
 def _display_progress(start_time, files_done, bytes_done):

@@ -17,7 +17,7 @@ from tests.assertions import assert_equal
 
 
 # Tests for describe_security_groups
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_security_groups_success(mock_create_client):
     """Test describe_security_groups returns list of security groups."""
     mock_ec2 = MagicMock()
@@ -39,7 +39,7 @@ def test_describe_security_groups_success(mock_create_client):
     mock_ec2.describe_security_groups.assert_called_once_with()
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_security_groups_with_group_ids(mock_create_client):
     """Test describe_security_groups passes group_ids to API."""
     mock_ec2 = MagicMock()
@@ -52,7 +52,7 @@ def test_describe_security_groups_with_group_ids(mock_create_client):
     mock_ec2.describe_security_groups.assert_called_once_with(GroupIds=group_ids)
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_security_groups_empty_result(mock_create_client):
     """Test describe_security_groups returns empty list when none found."""
     mock_ec2 = MagicMock()
@@ -64,7 +64,7 @@ def test_describe_security_groups_empty_result(mock_create_client):
     assert_equal(result, [])
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_security_groups_with_credentials(mock_create_client):
     """Test describe_security_groups passes credentials to client factory."""
     mock_ec2 = MagicMock()
@@ -80,7 +80,7 @@ def test_describe_security_groups_with_credentials(mock_create_client):
     )
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_security_groups_client_error(mock_create_client):
     """Test describe_security_groups raises ClientError on API failure."""
     mock_ec2 = MagicMock()
@@ -154,7 +154,7 @@ def test_delete_security_group_failure(mock_create_client, mock_print):
 
 
 # Tests for describe_snapshots
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_snapshots_success(mock_create_client):
     """Test describe_snapshots returns list of snapshots."""
     mock_ec2 = MagicMock()
@@ -176,7 +176,7 @@ def test_describe_snapshots_success(mock_create_client):
     mock_ec2.describe_snapshots.assert_called_once_with()
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_snapshots_with_owner_ids(mock_create_client):
     """Test describe_snapshots passes owner_ids to API."""
     mock_ec2 = MagicMock()
@@ -189,7 +189,7 @@ def test_describe_snapshots_with_owner_ids(mock_create_client):
     mock_ec2.describe_snapshots.assert_called_once_with(OwnerIds=owner_ids)
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_snapshots_with_snapshot_ids(mock_create_client):
     """Test describe_snapshots passes snapshot_ids to API."""
     mock_ec2 = MagicMock()
@@ -202,7 +202,7 @@ def test_describe_snapshots_with_snapshot_ids(mock_create_client):
     mock_ec2.describe_snapshots.assert_called_once_with(SnapshotIds=snapshot_ids)
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_snapshots_with_both_filters(mock_create_client):
     """Test describe_snapshots passes both owner_ids and snapshot_ids."""
     mock_ec2 = MagicMock()
@@ -216,7 +216,7 @@ def test_describe_snapshots_with_both_filters(mock_create_client):
     mock_ec2.describe_snapshots.assert_called_once_with(OwnerIds=owner_ids, SnapshotIds=snapshot_ids)
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_snapshots_empty_result(mock_create_client):
     """Test describe_snapshots returns empty list when none found."""
     mock_ec2 = MagicMock()
@@ -228,7 +228,7 @@ def test_describe_snapshots_empty_result(mock_create_client):
     assert_equal(result, [])
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_snapshots_with_credentials(mock_create_client):
     """Test describe_snapshots passes credentials to client factory."""
     mock_ec2 = MagicMock()
@@ -244,7 +244,7 @@ def test_describe_snapshots_with_credentials(mock_create_client):
     )
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_snapshots_client_error(mock_create_client):
     """Test describe_snapshots raises ClientError on API failure."""
     mock_ec2 = MagicMock()
@@ -259,7 +259,7 @@ def test_describe_snapshots_client_error(mock_create_client):
 
 
 # Tests for describe_volumes
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_volumes_success(mock_create_client):
     """Test describe_volumes returns list of volumes."""
     mock_ec2 = MagicMock()
@@ -281,7 +281,7 @@ def test_describe_volumes_success(mock_create_client):
     mock_ec2.describe_volumes.assert_called_once_with()
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_volumes_with_filters(mock_create_client):
     """Test describe_volumes passes filters to API."""
     mock_ec2 = MagicMock()
@@ -294,7 +294,7 @@ def test_describe_volumes_with_filters(mock_create_client):
     mock_ec2.describe_volumes.assert_called_once_with(Filters=filters)
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_volumes_empty_result(mock_create_client):
     """Test describe_volumes returns empty list when none found."""
     mock_ec2 = MagicMock()
@@ -306,7 +306,7 @@ def test_describe_volumes_empty_result(mock_create_client):
     assert_equal(result, [])
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_volumes_with_credentials(mock_create_client):
     """Test describe_volumes passes credentials to client factory."""
     mock_ec2 = MagicMock()
@@ -322,7 +322,7 @@ def test_describe_volumes_with_credentials(mock_create_client):
     )
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_volumes_client_error(mock_create_client):
     """Test describe_volumes raises ClientError on API failure."""
     mock_ec2 = MagicMock()

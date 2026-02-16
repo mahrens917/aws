@@ -161,7 +161,7 @@ class TestAuditElasticIpsInRegionEdgeCases:
             result = audit_elastic_ips_in_region("us-east-1", "test-key", "test-secret")
 
         assert result is not None
-        assert result["unassociated_eips"][0]["domain"] == "N/A"
+        assert result["unassociated_eips"][0]["domain"] is None
         assert result["unassociated_eips"][0]["instance_id"] is None
         assert result["unassociated_eips"][0]["tags"] == []
 

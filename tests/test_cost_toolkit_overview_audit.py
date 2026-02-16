@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
+import pytest
 from botocore.exceptions import ClientError
 
 from cost_toolkit.overview.audit import (
@@ -67,15 +68,13 @@ def test_run_audit_script_success(capsys, tmp_path):
     assert "Total: 10 items" in captured.out
 
 
-def test_run_audit_script_failure(capsys, tmp_path):
-    """Test _run_audit_script when script fails."""
+def test_run_audit_script_failure(tmp_path):
+    """Test _run_audit_script propagates non-ClientError exceptions."""
     script_path = tmp_path / "test_script.py"
     script_path.write_text("raise Exception('boom')")
 
-    _run_audit_script("Test Audit", str(script_path))
-
-    captured = capsys.readouterr()
-    assert "Unable to load script" in captured.out or "boom" in captured.out
+    with pytest.raises(Exception, match="boom"):
+        _run_audit_script("Test Audit", str(script_path))
 
 
 def test_run_audit_script_timeout(capsys, tmp_path):

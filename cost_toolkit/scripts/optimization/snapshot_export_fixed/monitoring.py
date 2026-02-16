@@ -35,7 +35,8 @@ def _handle_file_not_found(check_num):
         return []
 
     print("   ❌ S3 file disappeared during stability check - export may have failed")
-    raise S3FileValidationException("S3 file disappeared during validation")  # noqa: TRY003
+    msg = "S3 file disappeared during validation"
+    raise S3FileValidationException(msg)
 
 
 def _compare_checks_fixed(stability_checks):
@@ -106,16 +107,16 @@ def check_s3_file_completion(s3_client, bucket_name, s3_key, expected_size_gb, f
             stability_checks = _handle_file_not_found(check_num)
         except (BotoCoreError, ClientError) as exc:
             print(f"   ❌ Error checking S3 file: {exc}")
-            raise S3FileValidationException(f"Failed to check S3 file: {exc}") from exc  # noqa: TRY003
+            msg = f"Failed to check S3 file: {exc}"
+            raise S3FileValidationException(msg) from exc
 
         if check_num < required_stable_checks - 1:
             print(f"   ⏳ Waiting {check_interval_minutes} minutes for next stability check...")
             _WAIT_EVENT.wait(check_interval_minutes * 60)
 
     if len(stability_checks) < required_stable_checks:
-        raise S3FileValidationException(  # noqa: TRY003
-            f"File not stable - completed {len(stability_checks)}/{required_stable_checks} checks"
-        )
+        msg = f"File not stable - completed {len(stability_checks)}/{required_stable_checks} checks"
+        raise S3FileValidationException(msg)
 
     final_check = stability_checks[-1]
     _validate_final_size(final_check, expected_size_gb, stability_required_minutes)
@@ -146,9 +147,8 @@ def verify_s3_export_final(s3_client, bucket_name, s3_key, expected_size_gb):
     max_expected_gb = expected_size_gb * constants.VMDK_MAX_EXPANSION_RATIO
 
     if not min_expected_gb <= file_size_gb <= max_expected_gb:
-        raise S3FileValidationException(  # noqa: TRY003
-            f"Final size validation failed: {file_size_gb:.2f} GB " f"(expected {min_expected_gb:.1f}-{max_expected_gb:.1f} GB)"
-        )
+        msg = f"Final size validation failed: {file_size_gb:.2f} GB " f"(expected {min_expected_gb:.1f}-{max_expected_gb:.1f} GB)"
+        raise S3FileValidationException(msg)
 
     print("   ✅ Size validation passed")
 

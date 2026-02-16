@@ -78,7 +78,7 @@ def create_volume_snapshot(volume_id: str, description: Optional[str] = None) ->
         volume = response["Volumes"][0]
         volume_size = volume["Size"]
         volume_tags = get_volume_tags(volume)
-        volume_name = volume_tags.get("Name", "Unnamed")
+        volume_name = volume_tags.get("Name")
 
         # Create default description if none provided
         if not description:

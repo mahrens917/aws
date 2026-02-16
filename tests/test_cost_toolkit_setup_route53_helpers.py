@@ -355,5 +355,5 @@ class TestBuildExistingRecordsMap:
 
         result = _build_existing_records_map(records)
 
-        assert "-A" in result
-        assert "example.com.-" in result
+        assert "None-A" in result
+        assert "example.com.-None" in result

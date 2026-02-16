@@ -6,6 +6,8 @@ from botocore.exceptions import ClientError
 
 from cost_toolkit.scripts.snapshot_export_common import SAMPLE_SNAPSHOTS
 
+_MIN_S3_KEY_PARTS = 3
+
 
 def cleanup_temporary_ami(ec2_client, ami_id, _region):
     """Clean up temporary AMI after successful export - fail fast on errors"""
@@ -27,7 +29,7 @@ def check_existing_completed_exports(s3_client, region):
             for obj in response["Contents"]:
                 if obj["Key"].endswith(".vmdk"):
                     key_parts = obj["Key"].split("/")
-                    if len(key_parts) >= 3:  # noqa: PLR2004
+                    if len(key_parts) >= _MIN_S3_KEY_PARTS:
                         ami_id = key_parts[1]
                         export_file = key_parts[2]
                         export_task_id = export_file.replace(".vmdk", "")

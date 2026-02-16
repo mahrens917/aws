@@ -24,46 +24,39 @@ if TYPE_CHECKING:
     from migration_state_v2 import MigrationStateV2
 
 
-class BucketDeleter:  # pylint: disable=too-few-public-methods
-    """Handles deleting bucket contents from S3."""
+def delete_bucket(s3, state: "MigrationStateV2", bucket: str) -> None:
+    """Delete a bucket and all its contents from S3 (including all versions)."""
+    bucket_info = state.get_bucket_info(bucket)
+    total_objects = bucket_info["file_count"]
+    print(f"  Deleting {total_objects:,} objects from S3 (including all versions)...")
+    print()
 
-    def __init__(self, s3, state: "MigrationStateV2"):
-        self.s3 = s3
-        self.state = state
+    paginator = s3.get_paginator("list_object_versions")
+    deleted_count = 0
+    start_time = time.time()
+    progress = ProgressTracker(update_interval=2.0)
+    context = _DeleteContext(
+        s3=s3,
+        bucket=bucket,
+        total_objects=total_objects,
+        progress=progress,
+        start_time=start_time,
+    )
 
-    def delete_bucket(self, bucket: str) -> None:  # pylint: disable=too-many-locals
-        """Delete a bucket and all its contents from S3 (including all versions)."""
-        bucket_info = self.state.get_bucket_info(bucket)
-        total_objects = bucket_info["file_count"]
-        print(f"  Deleting {total_objects:,} objects from S3 (including all versions)...")
-        print()
+    for page in paginator.paginate(Bucket=bucket):
+        deleted_count = _process_delete_page(page, deleted_count, context)
 
-        paginator = self.s3.get_paginator("list_object_versions")
-        deleted_count = 0
-        start_time = time.time()
-        progress = ProgressTracker(update_interval=2.0)
-        context = _DeleteContext(
-            s3=self.s3,
-            bucket=bucket,
-            total_objects=total_objects,
-            progress=progress,
-            start_time=start_time,
-        )
+    print()
+    duration = format_duration(time.time() - start_time)
+    print(f"  ✓ Deleted {deleted_count:,} objects/versions in {duration}")
+    print()
+    _abort_multipart_uploads(s3, bucket)
 
-        for page in paginator.paginate(Bucket=bucket):
-            deleted_count = _process_delete_page(page, deleted_count, context)
+    if _bucket_has_contents(s3, bucket):
+        raise BucketNotEmptyError()
 
-        print()
-        duration = format_duration(time.time() - start_time)
-        print(f"  ✓ Deleted {deleted_count:,} objects/versions in {duration}")
-        print()
-        _abort_multipart_uploads(self.s3, bucket)
-
-        if _bucket_has_contents(self.s3, bucket):
-            raise BucketNotEmptyError()
-
-        print("  Deleting empty bucket...")
-        self.s3.delete_bucket(Bucket=bucket)
+    print("  Deleting empty bucket...")
+    s3.delete_bucket(Bucket=bucket)
 
 
 def _collect_objects_to_delete(page) -> List[dict]:
@@ -150,10 +143,10 @@ def _delete_page_objects(s3, bucket: str, objects_to_delete: List[dict]) -> List
     """Issue a bulk delete for the provided objects and return any errors."""
     response = s3.delete_objects(Bucket=bucket, Delete={"Objects": objects_to_delete}) or {}
     response_errors_raw = []
-    if isinstance(response, dict):
-        response_errors_raw = response.get("Errors", [])
-    elif hasattr(response, "get"):
-        response_errors_raw = response.get("Errors", [])
+    if isinstance(response, dict) and "Errors" in response:
+        response_errors_raw = response["Errors"]
+    elif hasattr(response, "get") and response.get("Errors") is not None:
+        response_errors_raw = response["Errors"]
     errors = _ensure_list(response_errors_raw)
     if errors:
         print("\n  Encountered delete errors:")
@@ -182,4 +175,4 @@ class _DeleteContext:
     start_time: float
 
 
-__all__ = ["BucketDeleter"]
+__all__ = ["delete_bucket"]

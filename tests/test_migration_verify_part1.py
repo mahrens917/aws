@@ -1,17 +1,17 @@
 """
 Unit tests for migration_verify.py - Part 1.
 
-Tests FileInventoryChecker and VerificationProgressTracker.
+Tests for inventory and progress functions.
 """
 
 import time
-from pathlib import Path
 from unittest import mock
 
 import pytest
 
-from migration_verify_checksums import VerificationProgressTracker
-from migration_verify_inventory import FileInventoryChecker
+from migration_utils import ProgressTracker
+from migration_verify_checksums import update_verification_progress
+from migration_verify_inventory import check_inventory, load_expected_files, scan_local_files
 from tests.assertions import assert_equal
 
 
@@ -27,8 +27,7 @@ def test_load_expected_files_returns_file_map(tmp_path, mock_db_connection):
 
     mock_state.db_conn.get_connection.return_value = mock_db_connection(mock_rows)
 
-    checker = FileInventoryChecker(mock_state, tmp_path)
-    result = checker.load_expected_files("test-bucket")
+    result = load_expected_files(mock_state, "test-bucket")
 
     assert_equal(len(result), 2)
     assert_equal(result["file1.txt"]["size"], 100)
@@ -47,8 +46,7 @@ def test_load_expected_files_normalizes_windows_paths(tmp_path, mock_db_connecti
 
     mock_state.db_conn.get_connection.return_value = mock_db_connection(mock_rows)
 
-    checker = FileInventoryChecker(mock_state, tmp_path)
-    result = checker.load_expected_files("test-bucket")
+    result = load_expected_files(mock_state, "test-bucket")
 
     # Path should be normalized to forward slashes
     assert "dir/file.txt" in result
@@ -64,10 +62,7 @@ def test_scan_local_files_finds_files(tmp_path):
     (bucket_path / "subdir").mkdir()
     (bucket_path / "subdir" / "file2.txt").write_text("content2")
 
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, tmp_path)
-
-    local_files = checker.scan_local_files("test-bucket", 2)
+    local_files = scan_local_files(tmp_path, "test-bucket", 2)
 
     assert_equal(len(local_files), 2)
     assert "file1.txt" in local_files
@@ -80,10 +75,7 @@ def test_scan_local_files_handles_missing_directory(tmp_path):
     bucket_path = tmp_path / "test-bucket"
     bucket_path.mkdir()
 
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, tmp_path)
-
-    local_files = checker.scan_local_files("test-bucket", 0)
+    local_files = scan_local_files(tmp_path, "test-bucket", 0)
 
     assert not local_files
 
@@ -95,10 +87,7 @@ def test_scan_local_files_normalizes_windows_paths(tmp_path):
     (bucket_path / "subdir").mkdir()
     (bucket_path / "subdir" / "file.txt").write_text("content")
 
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, tmp_path)
-
-    local_files = checker.scan_local_files("test-bucket", 1)
+    local_files = scan_local_files(tmp_path, "test-bucket", 1)
 
     # Should use forward slashes regardless of platform
     assert "subdir/file.txt" in local_files
@@ -107,27 +96,21 @@ def test_scan_local_files_normalizes_windows_paths(tmp_path):
 
 def test_check_inventory_success_when_files_match():
     """Test inventory check succeeds when files match"""
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, Path("/tmp"))
-
     expected_keys = {"file1.txt", "file2.txt", "dir/file3.txt"}
     local_keys = {"file1.txt", "file2.txt", "dir/file3.txt"}
 
-    errors = checker.check_inventory(expected_keys, local_keys)
+    errors = check_inventory(expected_keys, local_keys)
 
     assert not errors
 
 
 def test_check_inventory_fails_on_missing_files():
     """Test inventory check fails when files are missing"""
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, Path("/tmp"))
-
     expected_keys = {"file1.txt", "file2.txt", "file3.txt"}
     local_keys = {"file1.txt"}
 
     with pytest.raises(ValueError) as exc_info:
-        checker.check_inventory(expected_keys, local_keys)
+        check_inventory(expected_keys, local_keys)
 
     assert "File inventory check failed" in str(exc_info.value)
     assert "2 missing" in str(exc_info.value)
@@ -135,14 +118,11 @@ def test_check_inventory_fails_on_missing_files():
 
 def test_check_inventory_fails_on_extra_files():
     """Test inventory check fails when extra files exist"""
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, Path("/tmp"))
-
     expected_keys = {"file1.txt"}
     local_keys = {"file1.txt", "file2.txt", "file3.txt"}
 
     with pytest.raises(ValueError) as exc_info:
-        checker.check_inventory(expected_keys, local_keys)
+        check_inventory(expected_keys, local_keys)
 
     assert "File inventory check failed" in str(exc_info.value)
     assert "2 extra" in str(exc_info.value)
@@ -150,14 +130,11 @@ def test_check_inventory_fails_on_extra_files():
 
 def test_check_inventory_fails_on_both_missing_and_extra():
     """Test inventory check fails on both missing and extra files"""
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, Path("/tmp"))
-
     expected_keys = {"file1.txt", "file2.txt"}
     local_keys = {"file1.txt", "file3.txt", "file4.txt"}
 
     with pytest.raises(ValueError) as exc_info:
-        checker.check_inventory(expected_keys, local_keys)
+        check_inventory(expected_keys, local_keys)
 
     assert "File inventory check failed" in str(exc_info.value)
     assert "1 missing" in str(exc_info.value)
@@ -166,10 +143,11 @@ def test_check_inventory_fails_on_both_missing_and_extra():
 
 def test_update_progress_displays_on_file_milestone(capsys):
     """Test progress update displays at file count milestone"""
-    tracker = VerificationProgressTracker()
+    progress = ProgressTracker(update_interval=2.0)
     start_time = time.time() - 10  # Started 10 seconds ago
 
-    tracker.update_progress(
+    update_verification_progress(
+        progress=progress,
         start_time=start_time,
         verified_count=100,  # Divisible by 100 triggers display
         total_bytes_verified=1024 * 1024,  # 1 MB
@@ -184,10 +162,11 @@ def test_update_progress_displays_on_file_milestone(capsys):
 
 def test_update_progress_updates_on_file_count_milestone(capsys):
     """Test progress update displays on file count milestone (every 100 files)"""
-    tracker = VerificationProgressTracker()
+    progress = ProgressTracker(update_interval=2.0)
     start_time = time.time()
 
-    tracker.update_progress(
+    update_verification_progress(
+        progress=progress,
         start_time=start_time,
         verified_count=100,  # Exactly 100 files (divisible by 100)
         total_bytes_verified=1024 * 1024,
@@ -202,10 +181,11 @@ def test_update_progress_updates_on_file_count_milestone(capsys):
 
 def test_update_progress_no_update_when_too_soon(capsys):
     """Test progress update doesn't display when too soon"""
-    tracker = VerificationProgressTracker()
+    progress = ProgressTracker(update_interval=2.0)
     start_time = time.time()
 
-    tracker.update_progress(
+    update_verification_progress(
+        progress=progress,
         start_time=start_time,
         verified_count=50,
         total_bytes_verified=1024 * 1024,

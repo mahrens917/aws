@@ -15,8 +15,12 @@ from cost_toolkit.scripts.aws_ec2_operations import get_all_regions
 
 def _extract_instance_info(instance):
     """Extract and format information from an RDS instance"""
-    db_subnet_group = instance.get("DBSubnetGroup", {})
-    endpoint = instance.get("Endpoint", {})
+    db_subnet_group = {}
+    if "DBSubnetGroup" in instance:
+        db_subnet_group = instance["DBSubnetGroup"]
+    endpoint = {}
+    if "Endpoint" in instance:
+        endpoint = instance["Endpoint"]
     subnets = []
     if "Subnets" in db_subnet_group:
         subnets = db_subnet_group["Subnets"]
@@ -26,22 +30,24 @@ def _extract_instance_info(instance):
         "engine_version": instance["EngineVersion"],
         "instance_class": instance["DBInstanceClass"],
         "status": instance["DBInstanceStatus"],
-        "vpc_id": db_subnet_group.get("VpcId", "N/A"),
-        "subnet_group": db_subnet_group.get("DBSubnetGroupName", "N/A"),
+        "vpc_id": db_subnet_group.get("VpcId"),
+        "subnet_group": db_subnet_group.get("DBSubnetGroupName"),
         "subnets": [subnet["SubnetIdentifier"] for subnet in subnets],
-        "endpoint": endpoint.get("Address", "N/A"),
-        "port": endpoint.get("Port", "N/A"),
-        "publicly_accessible": instance.get("PubliclyAccessible", False),
-        "multi_az": instance.get("MultiAZ", False),
-        "storage_type": instance.get("StorageType", "N/A"),
-        "allocated_storage": instance.get("AllocatedStorage", 0),
-        "creation_time": instance.get("InstanceCreateTime", "N/A"),
+        "endpoint": endpoint.get("Address"),
+        "port": endpoint.get("Port"),
+        "publicly_accessible": instance.get("PubliclyAccessible"),
+        "multi_az": instance.get("MultiAZ"),
+        "storage_type": instance.get("StorageType"),
+        "allocated_storage": instance.get("AllocatedStorage"),
+        "creation_time": instance.get("InstanceCreateTime"),
     }
 
 
 def _extract_cluster_info(cluster):
     """Extract and format information from an RDS cluster"""
-    db_subnet_group = cluster.get("DBSubnetGroup", {})
+    db_subnet_group = {}
+    if "DBSubnetGroup" in cluster:
+        db_subnet_group = cluster["DBSubnetGroup"]
     subnets = []
     if "Subnets" in db_subnet_group:
         subnets = db_subnet_group["Subnets"]
@@ -49,17 +55,17 @@ def _extract_cluster_info(cluster):
         "identifier": cluster["DBClusterIdentifier"],
         "engine": cluster["Engine"],
         "engine_version": cluster["EngineVersion"],
-        "engine_mode": cluster.get("EngineMode", "provisioned"),
+        "engine_mode": cluster.get("EngineMode"),
         "status": cluster["Status"],
-        "vpc_id": db_subnet_group.get("VpcId", "N/A"),
-        "subnet_group": db_subnet_group.get("DBSubnetGroupName", "N/A"),
+        "vpc_id": db_subnet_group.get("VpcId"),
+        "subnet_group": db_subnet_group.get("DBSubnetGroupName"),
         "subnets": [subnet["SubnetIdentifier"] for subnet in subnets],
-        "endpoint": cluster.get("Endpoint", "N/A"),
-        "reader_endpoint": cluster.get("ReaderEndpoint", "N/A"),
-        "port": cluster.get("Port", "N/A"),
-        "creation_time": cluster.get("ClusterCreateTime", "N/A"),
-        "serverless_v2_scaling": cluster.get("ServerlessV2ScalingConfiguration", {}),
-        "capacity": cluster.get("Capacity", "N/A"),
+        "endpoint": cluster.get("Endpoint"),
+        "reader_endpoint": cluster.get("ReaderEndpoint"),
+        "port": cluster.get("Port"),
+        "creation_time": cluster.get("ClusterCreateTime"),
+        "serverless_v2_scaling": cluster.get("ServerlessV2ScalingConfiguration"),
+        "capacity": cluster.get("Capacity"),
     }
 
 
@@ -139,16 +145,18 @@ def _scan_region_resources(region, aws_access_key_id, aws_secret_access_key):
     interface_info_list = []
     if rds_interfaces:
         for interface in rds_interfaces:
-            association = interface.get("Association", {})
+            association = {}
+            if "Association" in interface:
+                association = interface["Association"]
             interface_info = {
                 "region": region,
                 "interface_id": interface["NetworkInterfaceId"],
-                "vpc_id": interface.get("VpcId", "N/A"),
-                "subnet_id": interface.get("SubnetId", "N/A"),
-                "private_ip": interface.get("PrivateIpAddress", "N/A"),
-                "public_ip": association.get("PublicIp", "None"),
+                "vpc_id": interface.get("VpcId"),
+                "subnet_id": interface.get("SubnetId"),
+                "private_ip": interface.get("PrivateIpAddress"),
+                "public_ip": association.get("PublicIp"),
                 "status": interface["Status"],
-                "description": interface.get("Description", "No description"),
+                "description": interface.get("Description"),
             }
             interface_info_list.append(interface_info)
 

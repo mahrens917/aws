@@ -12,7 +12,7 @@ _WAIT_EVENT = Event()
 
 
 @dataclass
-class InstanceNetworkContext:  # pylint: disable=too-many-instance-attributes
+class InstanceNetworkContext:
     """Normalized network context for an EC2 instance."""
 
     instance: dict

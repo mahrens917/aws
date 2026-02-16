@@ -77,7 +77,7 @@ class TestPrintKeyInfo:
         _print_key_info(key_info)
 
         captured = capsys.readouterr()
-        assert "No description" in captured.out
+        assert "Description: None" in captured.out
 
 
 class TestPrintKeyAliases:

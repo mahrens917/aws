@@ -31,25 +31,13 @@ class TestCreateMigrator:
             mock.patch("migrate_v2.MigrationStateV2"),
             mock.patch("migrate_v2.boto3.client"),
             mock.patch("migrate_v2.Path"),
-            mock.patch("migrate_v2.DriveChecker"),
-            mock.patch("migrate_v2.BucketScanner"),
-            mock.patch("migrate_v2.GlacierRestorer"),
-            mock.patch("migrate_v2.GlacierWaiter"),
-            mock.patch("migrate_v2.BucketMigrator"),
-            mock.patch("migrate_v2.BucketMigrationOrchestrator"),
-            mock.patch("migrate_v2.StatusReporter"),
         ):
             migrator = create_migrator()
 
             assert isinstance(migrator, S3MigrationV2)
+            assert migrator.s3 is not None
             assert migrator.state is not None
-            assert migrator.drive_checker is not None
-            assert migrator.scanner is not None
-            assert migrator.glacier_restorer is not None
-            assert migrator.glacier_waiter is not None
-            assert migrator.bucket_migrator is not None
-            assert migrator.migration_orchestrator is not None
-            assert migrator.status_reporter is not None
+            assert migrator.base_path is not None
 
     def test_create_migrator_instantiates_all_dependencies(self, mock_config):
         """create_migrator creates all required dependencies."""
@@ -57,27 +45,13 @@ class TestCreateMigrator:
             mock.patch("migrate_v2.MigrationStateV2") as mock_state_class,
             mock.patch("migrate_v2.boto3.client") as mock_boto3,
             mock.patch("migrate_v2.Path"),
-            mock.patch("migrate_v2.DriveChecker") as mock_drive_checker_class,
-            mock.patch("migrate_v2.BucketScanner") as mock_scanner_class,
-            mock.patch("migrate_v2.GlacierRestorer") as mock_restorer_class,
-            mock.patch("migrate_v2.GlacierWaiter") as mock_waiter_class,
-            mock.patch("migrate_v2.BucketMigrator") as mock_migrator_class,
-            mock.patch("migrate_v2.BucketMigrationOrchestrator") as mock_orchestrator_class,
-            mock.patch("migrate_v2.StatusReporter") as mock_reporter_class,
         ):
 
             create_migrator()
 
-            # Verify all classes were instantiated
+            # Verify core dependencies were instantiated
             mock_state_class.assert_called_once_with(mock_config.STATE_DB_PATH)
             mock_boto3.assert_called_once_with("s3")
-            mock_drive_checker_class.assert_called_once()
-            mock_scanner_class.assert_called_once()
-            mock_restorer_class.assert_called_once()
-            mock_waiter_class.assert_called_once()
-            mock_migrator_class.assert_called_once()
-            mock_orchestrator_class.assert_called_once()
-            mock_reporter_class.assert_called_once()
 
 
 class TestMain:

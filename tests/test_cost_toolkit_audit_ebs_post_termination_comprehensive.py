@@ -49,8 +49,8 @@ class TestBuildAttachmentInfo:
         result = _build_attachment_info(attachments)
 
         assert "i-123" in result
-        assert "Unknown" in result
-        assert "DeleteOnTermination: False" in result
+        assert "None" in result
+        assert "DeleteOnTermination: None" in result
 
 
 class TestBuildVolumeDetail:
@@ -98,7 +98,7 @@ class TestBuildVolumeDetail:
 
         result = _build_volume_detail(volume)
 
-        assert result["Name"] == "Unnamed"
+        assert result["Name"] is None
         assert result["Tags"] == {}
 
     def test_build_volume_detail_cost_calculation(self):

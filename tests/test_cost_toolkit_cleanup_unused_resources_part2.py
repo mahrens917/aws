@@ -6,14 +6,16 @@ from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 
-from cost_toolkit.scripts.cleanup.aws_cleanup_unused_resources import (
+from cost_toolkit.scripts.cleanup.unused_security_groups import (
+    analyze_security_groups_usage,
+    delete_unused_security_groups,
+)
+from cost_toolkit.scripts.cleanup.unused_subnets import (
     _categorize_subnets,
     _collect_used_subnets_from_elb,
     _collect_used_subnets_from_nat_gateways,
     _collect_used_subnets_from_rds,
-    analyze_security_groups_usage,
     analyze_subnet_usage,
-    delete_unused_security_groups,
 )
 
 
@@ -184,11 +186,11 @@ class TestAnalyzeSecurityGroupsUsage:
             mock_ec2.describe_network_interfaces.return_value = {"NetworkInterfaces": []}
 
             with patch(
-                "cost_toolkit.scripts.cleanup.aws_cleanup_unused_resources._collect_used_sgs_from_rds",
+                "cost_toolkit.scripts.cleanup.unused_security_groups._collect_used_sgs_from_rds",
                 return_value=set(),
             ):
                 with patch(
-                    "cost_toolkit.scripts.cleanup.aws_cleanup_unused_resources._collect_used_sgs_from_elb",
+                    "cost_toolkit.scripts.cleanup.unused_security_groups._collect_used_sgs_from_elb",
                     return_value=set(),
                 ):
                     result = analyze_security_groups_usage("us-east-1")
@@ -244,11 +246,11 @@ class TestAnalyzeSubnetUsage:
             mock_ec2.describe_nat_gateways.return_value = {"NatGateways": []}
 
             with patch(
-                "cost_toolkit.scripts.cleanup.aws_cleanup_unused_resources._collect_used_subnets_from_rds",
+                "cost_toolkit.scripts.cleanup.unused_subnets._collect_used_subnets_from_rds",
                 return_value=set(),
             ):
                 with patch(
-                    "cost_toolkit.scripts.cleanup.aws_cleanup_unused_resources._collect_used_subnets_from_elb",
+                    "cost_toolkit.scripts.cleanup.unused_subnets._collect_used_subnets_from_elb",
                     return_value=set(),
                 ):
                     result = analyze_subnet_usage("us-east-1")

@@ -161,14 +161,15 @@ def delete_custom_metrics():
 def _update_log_group_retention(logs_client, log_group):
     """Update retention for a single log group."""
     log_group_name = log_group["logGroupName"]
-    retention_days = log_group.get("retentionInDays", "Never expire")
-    stored_bytes = log_group.get("storedBytes", 0)
+    retention_days = log_group.get("retentionInDays")
+    stored_bytes = log_group.get("storedBytes")
 
     print(f"📄 Log group: {log_group_name}")
     print(f"   Retention: {retention_days} days")
-    print(f"   Size: {stored_bytes / (1024*1024):.2f} MB")
+    if stored_bytes:
+        print(f"   Size: {stored_bytes / (1024*1024):.2f} MB")
 
-    if retention_days == "Never expire" or retention_days > 1:
+    if retention_days is None or retention_days > 1:
         print(f"🛑 Setting retention to 1 day for: {log_group_name}")
         try:
             logs_client.put_retention_policy(logGroupName=log_group_name, retentionInDays=1)

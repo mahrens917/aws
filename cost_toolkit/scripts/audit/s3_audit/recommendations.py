@@ -55,9 +55,9 @@ def _check_storage_class_optimization(bucket_analysis):
     """Check for objects that could be moved to cheaper storage classes"""
     recommendations = []
     storage_classes = bucket_analysis["storage_classes"]
-    standard_objects = storage_classes.get("STANDARD", {"count": 0, "size_bytes": 0})
+    standard_objects = storage_classes.get("STANDARD")
 
-    if standard_objects["size_bytes"] == 0:
+    if not standard_objects or standard_objects["size_bytes"] == 0:
         return recommendations
 
     ia_rec = _create_ia_recommendation(bucket_analysis["old_objects"])

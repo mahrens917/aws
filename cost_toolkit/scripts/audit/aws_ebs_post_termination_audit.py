@@ -17,10 +17,10 @@ def _build_attachment_info(attachments):
         return "Unattached"
 
     attachment = attachments[0]
-    instance_id = attachment.get("InstanceId", "Unknown")
-    device = attachment.get("Device", "Unknown")
-    state = attachment.get("State", "Unknown")
-    delete_on_termination = attachment.get("DeleteOnTermination", False)
+    instance_id = attachment.get("InstanceId")
+    device = attachment.get("Device")
+    state = attachment.get("State")
+    delete_on_termination = attachment.get("DeleteOnTermination")
     return f"{instance_id} ({device}) - State: {state}, " f"DeleteOnTermination: {delete_on_termination}"
 
 
@@ -33,7 +33,7 @@ def _build_volume_detail(volume):
         attachments = volume["Attachments"]
     attachment_info = _build_attachment_info(attachments)
     tags = get_resource_tags(volume)
-    name = tags.get("Name", "Unnamed")
+    name = tags.get("Name")
 
     return {
         "VolumeId": volume["VolumeId"],

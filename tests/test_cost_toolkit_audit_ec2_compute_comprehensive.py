@@ -90,7 +90,7 @@ class TestBuildInstanceInfo:
         assert result["instance_id"] == "i-789012"
         assert result["instance_type"] == "t2.nano"
         assert result["state"] == "stopped"
-        assert result["platform"] == "Linux/UNIX"
+        assert result["platform"] is None
         assert result["vpc_id"] is None
         assert result["public_ip"] is None
         assert result["tags"] == []

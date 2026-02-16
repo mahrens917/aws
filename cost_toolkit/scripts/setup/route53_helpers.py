@@ -70,8 +70,8 @@ def _check_www_a_record(record, domain_name):
 def _check_canva_txt_record(record):
     """Check if record is Canva verification TXT record."""
     record_type = record.get("Type")
-    record_name = record.get("Name", "")
-    if record_type != "TXT" or "_canva-domain-verify" not in record_name:
+    record_name = record.get("Name")
+    if record_type != "TXT" or not record_name or "_canva-domain-verify" not in record_name:
         return False
 
     if "ResourceRecords" in record:
@@ -121,8 +121,8 @@ def _build_existing_records_map(records):
     """Build a map of existing DNS records for quick lookup"""
     existing_records = {}
     for record in records:
-        record_name = record.get("Name", "")
-        record_type = record.get("Type", "")
+        record_name = record.get("Name")
+        record_type = record.get("Type")
         key = f"{record_name}-{record_type}"
         existing_records[key] = record
     return existing_records

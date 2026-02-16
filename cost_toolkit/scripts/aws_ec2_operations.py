@@ -16,6 +16,15 @@ from cost_toolkit.common.aws_common import (
     get_instance_name,
 )
 from cost_toolkit.scripts.aws_security import delete_security_group as delete_security_group_shared
+from cost_toolkit.scripts.ec2_describe_ops import describe_addresses as describe_addresses
+from cost_toolkit.scripts.ec2_describe_ops import (
+    describe_network_interfaces as describe_network_interfaces,
+)
+from cost_toolkit.scripts.ec2_describe_ops import (
+    describe_security_groups as describe_security_groups,
+)
+from cost_toolkit.scripts.ec2_describe_ops import describe_snapshots as describe_snapshots
+from cost_toolkit.scripts.ec2_describe_ops import describe_volumes as describe_volumes
 
 
 def get_all_regions(
@@ -55,6 +64,11 @@ __all__ = [
     "find_resource_region",
     "delete_snapshot",
     "terminate_instance",
+    "describe_addresses",
+    "describe_network_interfaces",
+    "describe_security_groups",
+    "describe_snapshots",
+    "describe_volumes",
 ]
 
 
@@ -96,7 +110,7 @@ def delete_snapshot(
             response = client.describe_snapshots(SnapshotIds=[snapshot_id])
             snapshot = response["Snapshots"][0]
             size_gb = snapshot["VolumeSize"]
-            description = snapshot.get("Description", "No description")
+            description = snapshot.get("Description")
             start_time = snapshot["StartTime"]
             monthly_cost = size_gb * 0.05
 
@@ -235,188 +249,6 @@ def disable_termination_protection(
         print(f"   ❌ Failed to disable termination protection: {str(e)}")
         return False
     return True
-
-
-def describe_addresses(
-    region: str,
-    aws_access_key_id: Optional[str] = None,
-    aws_secret_access_key: Optional[str] = None,
-) -> list[dict]:
-    """
-    Get all Elastic IP addresses in a region.
-
-    Args:
-        region: AWS region name
-        aws_access_key_id: Optional AWS access key
-        aws_secret_access_key: Optional AWS secret key
-
-    Returns:
-        list: List of Elastic IP address dictionaries
-
-    Raises:
-        ClientError: If API call fails
-    """
-    ec2_client = create_ec2_client(
-        region=region,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-
-    response = ec2_client.describe_addresses()
-    return response["Addresses"]
-
-
-def describe_network_interfaces(
-    region: str,
-    aws_access_key_id: Optional[str] = None,
-    aws_secret_access_key: Optional[str] = None,
-    filters: Optional[list[dict]] = None,
-) -> list[dict]:
-    """
-    Get network interfaces in a region with optional filters.
-
-    Args:
-        region: AWS region name
-        aws_access_key_id: Optional AWS access key
-        aws_secret_access_key: Optional AWS secret key
-        filters: Optional list of filter dictionaries
-
-    Returns:
-        list: List of network interface dictionaries
-
-    Raises:
-        ClientError: If API call fails
-    """
-    ec2_client = create_ec2_client(
-        region=region,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-
-    params = {}
-    if filters:
-        params["Filters"] = filters
-
-    response = ec2_client.describe_network_interfaces(**params)
-    return response["NetworkInterfaces"]
-
-
-def describe_security_groups(
-    region: str,
-    aws_access_key_id: Optional[str] = None,
-    aws_secret_access_key: Optional[str] = None,
-    group_ids: Optional[list[str]] = None,
-) -> list[dict]:
-    """
-    Get security groups in a region.
-
-    Args:
-        region: AWS region name
-        aws_access_key_id: Optional AWS access key
-        aws_secret_access_key: Optional AWS secret key
-        group_ids: Optional list of security group IDs to filter
-
-    Returns:
-        list: List of security group dictionaries
-
-    Raises:
-        ClientError: If API call fails
-    """
-    ec2_client = create_ec2_client(
-        region=region,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-
-    params = {}
-    if group_ids:
-        params["GroupIds"] = group_ids
-
-    response = ec2_client.describe_security_groups(**params)
-    security_groups = []
-    if "SecurityGroups" in response:
-        security_groups = response["SecurityGroups"]
-    return security_groups
-
-
-def describe_snapshots(
-    region: str,
-    aws_access_key_id: Optional[str] = None,
-    aws_secret_access_key: Optional[str] = None,
-    owner_ids: Optional[list[str]] = None,
-    snapshot_ids: Optional[list[str]] = None,
-) -> list[dict]:
-    """
-    Get EBS snapshots in a region.
-
-    Args:
-        region: AWS region name
-        aws_access_key_id: Optional AWS access key
-        aws_secret_access_key: Optional AWS secret key
-        owner_ids: Optional list of owner IDs to filter (e.g., ['self'])
-        snapshot_ids: Optional list of snapshot IDs to filter
-
-    Returns:
-        list: List of snapshot dictionaries
-
-    Raises:
-        ClientError: If API call fails
-    """
-    ec2_client = create_ec2_client(
-        region=region,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-
-    params = {}
-    if owner_ids:
-        params["OwnerIds"] = owner_ids
-    if snapshot_ids:
-        params["SnapshotIds"] = snapshot_ids
-
-    response = ec2_client.describe_snapshots(**params)
-    snapshots = []
-    if "Snapshots" in response:
-        snapshots = response["Snapshots"]
-    return snapshots
-
-
-def describe_volumes(
-    region: str,
-    aws_access_key_id: Optional[str] = None,
-    aws_secret_access_key: Optional[str] = None,
-    filters: Optional[list[dict]] = None,
-) -> list[dict]:
-    """
-    Get EBS volumes in a region.
-
-    Args:
-        region: AWS region name
-        aws_access_key_id: Optional AWS access key
-        aws_secret_access_key: Optional AWS secret key
-        filters: Optional list of filter dictionaries
-
-    Returns:
-        list: List of volume dictionaries
-
-    Raises:
-        ClientError: If API call fails
-    """
-    ec2_client = create_ec2_client(
-        region=region,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key,
-    )
-
-    params = {}
-    if filters:
-        params["Filters"] = filters
-
-    response = ec2_client.describe_volumes(**params)
-    volumes = []
-    if "Volumes" in response:
-        volumes = response["Volumes"]
-    return volumes
 
 
 if __name__ == "__main__":  # pragma: no cover - script entry point

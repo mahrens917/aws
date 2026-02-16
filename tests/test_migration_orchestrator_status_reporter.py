@@ -1,4 +1,4 @@
-"""Unit tests for StatusReporter class from migration_orchestrator.py
+"""Unit tests for show_migration_status function from migration_orchestrator.py
 
 Tests cover:
 - Status display for all migration phases (scanning, glacier_restore, syncing, complete)
@@ -6,31 +6,15 @@ Tests cover:
 - Individual bucket details display
 """
 
-# pylint: disable=redefined-outer-name  # pytest fixtures
-
 from unittest import mock
 
-import pytest
-
-from migration_orchestrator import StatusReporter
+from migration_orchestrator import show_migration_status
 from migration_state_v2 import Phase
 
 
-@pytest.fixture
-def state_mock():
-    """Create mock MigrationStateV2"""
-    return mock.Mock()
-
-
-@pytest.fixture
-def status_reporter(request):
-    """Create StatusReporter instance"""
-    state_mgr = request.getfixturevalue("state_mock")
-    return StatusReporter(state_mgr)
-
-
-def test_show_status_scanning_phase(status_reporter, state_mock):
-    """Test show_status for SCANNING phase"""
+def test_show_status_scanning_phase():
+    """Test show_migration_status for SCANNING phase"""
+    state_mock = mock.Mock()
     state_mock.get_current_phase.return_value = Phase.SCANNING
     state_mock.get_all_buckets.return_value = []
     state_mock.get_scan_summary.return_value = {
@@ -40,15 +24,16 @@ def test_show_status_scanning_phase(status_reporter, state_mock):
     }
 
     with mock.patch("builtins.print") as mock_print:
-        status_reporter.show_status()
+        show_migration_status(state_mock)
 
     printed_text = " ".join([str(call) for call in mock_print.call_args_list])
     assert "MIGRATION STATUS" in printed_text
     assert "scanning" in printed_text.lower()
 
 
-def test_show_status_no_buckets(status_reporter, state_mock):
-    """Test show_status when no buckets exist"""
+def test_show_status_no_buckets():
+    """Test show_migration_status when no buckets exist"""
+    state_mock = mock.Mock()
     state_mock.get_current_phase.return_value = Phase.SCANNING
     state_mock.get_all_buckets.return_value = []
     state_mock.get_scan_summary.return_value = {
@@ -58,14 +43,15 @@ def test_show_status_no_buckets(status_reporter, state_mock):
     }
 
     with mock.patch("builtins.print") as mock_print:
-        status_reporter.show_status()
+        show_migration_status(state_mock)
 
     printed_text = " ".join([str(call) for call in mock_print.call_args_list])
     assert "MIGRATION STATUS" in printed_text
 
 
-def test_show_status_glacier_restore_phase_shows_summary(status_reporter, state_mock):
-    """Test show_status for GLACIER_RESTORE phase shows scan summary"""
+def test_show_status_glacier_restore_phase_shows_summary():
+    """Test show_migration_status for GLACIER_RESTORE phase shows scan summary"""
+    state_mock = mock.Mock()
     state_mock.get_current_phase.return_value = Phase.GLACIER_RESTORE
     state_mock.get_all_buckets.return_value = ["bucket-1", "bucket-2"]
     state_mock.get_scan_summary.return_value = {
@@ -94,7 +80,7 @@ def test_show_status_glacier_restore_phase_shows_summary(status_reporter, state_
     state_mock.get_bucket_status.side_effect = bucket_infos
 
     with mock.patch("builtins.print") as mock_print:
-        status_reporter.show_status()
+        show_migration_status(state_mock)
 
     printed_text = " ".join([str(call) for call in mock_print.call_args_list])
     assert "Overall Summary" in printed_text
@@ -102,8 +88,9 @@ def test_show_status_glacier_restore_phase_shows_summary(status_reporter, state_
     assert "Total Files: 1,000" in printed_text
 
 
-def test_show_status_shows_bucket_progress(status_reporter, state_mock):
-    """Test show_status displays bucket progress"""
+def test_show_status_shows_bucket_progress():
+    """Test show_migration_status displays bucket progress"""
+    state_mock = mock.Mock()
     state_mock.get_current_phase.return_value = Phase.SYNCING
     state_mock.get_all_buckets.return_value = ["bucket-1", "bucket-2", "bucket-3"]
     state_mock.get_scan_summary.return_value = {
@@ -139,15 +126,16 @@ def test_show_status_shows_bucket_progress(status_reporter, state_mock):
     state_mock.get_bucket_status.side_effect = bucket_infos
 
     with mock.patch("builtins.print") as mock_print:
-        status_reporter.show_status()
+        show_migration_status(state_mock)
 
     printed_text = " ".join([str(call) for call in mock_print.call_args_list])
     assert "Bucket Progress" in printed_text
     assert "Completed: 1/3" in printed_text
 
 
-def test_show_status_displays_bucket_details(status_reporter, state_mock):
-    """Test show_status shows individual bucket details"""
+def test_show_status_displays_bucket_details():
+    """Test show_migration_status shows individual bucket details"""
+    state_mock = mock.Mock()
     state_mock.get_current_phase.return_value = Phase.SYNCING
     state_mock.get_all_buckets.return_value = ["bucket-1"]
     state_mock.get_scan_summary.return_value = {
@@ -166,15 +154,16 @@ def test_show_status_displays_bucket_details(status_reporter, state_mock):
     )
 
     with mock.patch("builtins.print") as mock_print:
-        status_reporter.show_status()
+        show_migration_status(state_mock)
 
     printed_text = " ".join([str(call) for call in mock_print.call_args_list])
     assert "bucket-1" in printed_text
     assert "100" in printed_text
 
 
-def test_show_status_complete_phase(status_reporter, state_mock):
-    """Test show_status for COMPLETE phase"""
+def test_show_status_complete_phase():
+    """Test show_migration_status for COMPLETE phase"""
+    state_mock = mock.Mock()
     state_mock.get_current_phase.return_value = Phase.COMPLETE
     state_mock.get_all_buckets.return_value = ["bucket-1"]
     state_mock.get_scan_summary.return_value = {
@@ -192,7 +181,7 @@ def test_show_status_complete_phase(status_reporter, state_mock):
     )
 
     with mock.patch("builtins.print") as mock_print:
-        status_reporter.show_status()
+        show_migration_status(state_mock)
 
     printed_text = " ".join([str(call) for call in mock_print.call_args_list])
     assert "MIGRATION STATUS" in printed_text

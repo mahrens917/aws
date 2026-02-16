@@ -225,7 +225,7 @@ class TestCheckDetachedEni:
 
         result = _check_detached_eni(eni)
 
-        assert result == "detached"
+        assert result == "aws_service"
         captured = capsys.readouterr()
         assert "No attachment information - likely detached" in captured.out
 

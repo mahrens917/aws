@@ -34,7 +34,7 @@ exclude = ["ci_shared/", "scripts/", "docs/", ".venv/"]
 extend_exclude = ["ci_shared", "tests", "scripts"]
 pep621_dev_dependency_groups = []
 requirements_files_dev = ["scripts/requirements.txt"]
-per_rule_ignores = { DEP001 = ["overview", "s3_audit", "billing_report", "ebs_manager", "rds_aurora_migration", "snapshot_export_fixed", "analysis", "deletion", "workflow", "cache", "cleanup_temp_artifacts", "duplicate_tree", "find_compressible"], DEP002 = ["boto3", "pydantic"], DEP003 = ["ci_tools"] }
+per_rule_ignores = { DEP001 = ["overview", "s3_audit", "billing_report", "ebs_manager", "rds_aurora_migration", "snapshot_export_fixed", "analysis", "deletion", "workflow", "cache", "cleanup_temp_artifacts", "duplicate_tree", "find_compressible"], DEP002 = ["boto3", "pydantic", "psycopg2-binary"], DEP003 = ["ci_tools"] }
 
 [tool.deptry.package_module_name_map]
 "psycopg2-binary" = ["psycopg2"]

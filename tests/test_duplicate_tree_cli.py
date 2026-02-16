@@ -6,7 +6,7 @@ import sqlite3
 from pathlib import Path
 
 from duplicate_tree.analysis import ScanFingerprint, build_directory_index_from_db
-from duplicate_tree.cache import load_cached_report, store_cached_report
+from duplicate_tree.cache import CacheLocation, load_cached_report, store_cached_report
 from duplicate_tree.cli import main
 from tests.assertions import assert_equal
 
@@ -58,12 +58,10 @@ def test_cache_round_trip(tmp_path):
     db_path = tmp_path / "cache.db"
     fingerprint = ScanFingerprint(total_files=4, checksum="abc123")
     store_cached_report(
-        str(db_path),
-        fingerprint,
-        base_path="/drive",
+        CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/drive"),
         clusters=[],
     )
-    cached = load_cached_report(str(db_path), fingerprint, "/drive")
+    cached = load_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/drive"))
     assert cached is not None
     assert "rows" in cached
 

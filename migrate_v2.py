@@ -23,27 +23,24 @@ import argparse
 import shutil
 import signal
 import sys
-from dataclasses import dataclass
 from pathlib import Path
+from threading import Event
 
 import boto3
 
 import config as config_module
 import migrate_v2_smoke as smoke_tests
 from migration_orchestrator import (
-    BucketMigrationOrchestrator,
-    BucketMigrator,
     MigrationFatalError,
-    StatusReporter,
+    migrate_all_buckets,
+    show_migration_status,
 )
-from migration_scanner import BucketScanner, GlacierRestorer, GlacierWaiter
+from migration_scanner import request_all_restores, scan_all_buckets, wait_for_restores
 from migration_state_v2 import MigrationStateV2, Phase
 from state_db_admin import recreate_state_db
 
-# pylint: disable=no-member  # Attributes imported from config_local at runtime
 LOCAL_BASE_PATH = config_module.LOCAL_BASE_PATH
 STATE_DB_PATH = config_module.STATE_DB_PATH
-# pylint: enable=no-member
 config = config_module  # expose module for tests
 
 
@@ -73,87 +70,53 @@ def reset_migration_state():
         print("Reset cancelled")
 
 
-class DriveChecker:  # pylint: disable=too-few-public-methods
-    """Handles checking if destination drive is available and writable"""
-
-    def __init__(self, base_path: Path):
-        self.base_path = base_path
-
-    def check_available(self):
-        """Check if the destination drive is mounted and writable"""
-        parent = self.base_path.parent
-        if not parent.exists():
-            print()
-            print("=" * 70)
-            print("DRIVE NOT AVAILABLE")
-            print("=" * 70)
-            print("The destination drive is not mounted:")
-            print(f"  Expected: {parent}")
-            print()
-            print("Please:")
-            print("  1. Connect your external drive")
-            print("  2. Ensure it's mounted at the correct location")
-            print("  3. Run the migration again")
-            print("=" * 70)
-            sys.exit(1)
-        try:
-            self.base_path.mkdir(parents=True, exist_ok=True)
-        except PermissionError:
-            print()
-            print("=" * 70)
-            print("PERMISSION DENIED")
-            print("=" * 70)
-            print("Cannot write to destination:")
-            print(f"  Path: {self.base_path}")
-            print()
-            print("Please check:")
-            print("  1. The drive is properly mounted")
-            print("  2. You have write permissions")
-            print("=" * 70)
-            sys.exit(1)
+def check_drive_available(base_path: Path):
+    """Check if the destination drive is mounted and writable"""
+    parent = base_path.parent
+    if not parent.exists():
+        print()
+        print("=" * 70)
+        print("DRIVE NOT AVAILABLE")
+        print("=" * 70)
+        print("The destination drive is not mounted:")
+        print(f"  Expected: {parent}")
+        print()
+        print("Please:")
+        print("  1. Connect your external drive")
+        print("  2. Ensure it's mounted at the correct location")
+        print("  3. Run the migration again")
+        print("=" * 70)
+        sys.exit(1)
+    try:
+        base_path.mkdir(parents=True, exist_ok=True)
+    except PermissionError:
+        print()
+        print("=" * 70)
+        print("PERMISSION DENIED")
+        print("=" * 70)
+        print("Cannot write to destination:")
+        print(f"  Path: {base_path}")
+        print()
+        print("Please check:")
+        print("  1. The drive is properly mounted")
+        print("  2. You have write permissions")
+        print("=" * 70)
+        sys.exit(1)
 
 
-@dataclass(frozen=True)
-class MigrationComponents:
-    """Aggregates the orchestration helpers required by S3MigrationV2."""
-
-    drive_checker: DriveChecker
-    scanner: BucketScanner
-    glacier_restorer: GlacierRestorer
-    glacier_waiter: GlacierWaiter
-    migration_orchestrator: BucketMigrationOrchestrator
-    bucket_migrator: BucketMigrator
-    status_reporter: StatusReporter
-
-
-class S3MigrationV2:  # pylint: disable=too-many-instance-attributes
+class S3MigrationV2:
     """Main orchestrator for S3 to local migration using AWS CLI"""
 
-    def __init__(self, state: MigrationStateV2, components: MigrationComponents):
+    def __init__(self, s3, state: MigrationStateV2, base_path: Path):
+        self.s3 = s3
         self.state = state
-        self.drive_checker = components.drive_checker
-        self.scanner = components.scanner
-        self.glacier_restorer = components.glacier_restorer
-        self.glacier_waiter = components.glacier_waiter
-        self.bucket_migrator = components.bucket_migrator
-        self.migration_orchestrator = components.migration_orchestrator
-        self.status_reporter = components.status_reporter
-        self.interrupted = False
+        self.base_path = base_path
+        self.interrupted = Event()
         signal.signal(signal.SIGINT, self.signal_handler)
-
-    def _set_interrupted_flags(self):
-        """Set interrupted flags on all components"""
-        self.interrupted = True
-        self.scanner.interrupted = True
-        self.glacier_restorer.interrupted = True
-        self.glacier_waiter.interrupted = True
-        self.bucket_migrator.interrupted = True
-        self.bucket_migrator.syncer.interrupted = True
-        self.migration_orchestrator.interrupted = True
 
     def signal_handler(self, _signum, _frame):
         """Handle Ctrl+C gracefully"""
-        self._set_interrupted_flags()
+        self.interrupted.set()
         print("\n" + "=" * 70)
         print("MIGRATION INTERRUPTED")
         print("=" * 70)
@@ -174,26 +137,26 @@ class S3MigrationV2:  # pylint: disable=too-many-instance-attributes
             print("✗ AWS CLI not found on PATH. Install AWS CLI v2 and retry.")
             print("Download: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html")
             sys.exit(1)
-        self.drive_checker.check_available()
+        check_drive_available(self.base_path)
         current_phase = self.state.get_current_phase()
         if current_phase == Phase.COMPLETE:
             print("✓ Migration already complete!")
-            self.status_reporter.show_status()
+            show_migration_status(self.state)
             return
         print(f"Resuming from: {current_phase.value}")
         print()
         if current_phase == Phase.SCANNING:
-            self.scanner.scan_all_buckets()
+            scan_all_buckets(self.s3, self.state, self.interrupted)
             current_phase = Phase.GLACIER_RESTORE
         if current_phase == Phase.GLACIER_RESTORE:
-            self.glacier_restorer.request_all_restores()
+            request_all_restores(self.s3, self.state, self.interrupted)
             current_phase = Phase.GLACIER_WAIT
         if current_phase == Phase.GLACIER_WAIT:
-            self.glacier_waiter.wait_for_restores()
+            wait_for_restores(self.s3, self.state, self.interrupted)
             current_phase = Phase.SYNCING
         if current_phase in {Phase.SYNCING, Phase.VERIFYING, Phase.DELETING}:
             try:
-                self.migration_orchestrator.migrate_all_buckets()
+                migrate_all_buckets(self.s3, self.state, self.base_path, check_drive_available, self.interrupted)
             except MigrationFatalError:
                 sys.exit(1)
             current_phase = self.state.get_current_phase()
@@ -212,7 +175,7 @@ class S3MigrationV2:  # pylint: disable=too-many-instance-attributes
 
     def show_status(self):
         """Display current migration status"""
-        self.status_reporter.show_status()
+        show_migration_status(self.state)
 
     def reset(self):
         """Reset all state and start from beginning"""
@@ -224,28 +187,12 @@ def create_migrator() -> S3MigrationV2:
     state = MigrationStateV2(config.STATE_DB_PATH)
     s3 = boto3.client("s3")
     base_path = Path(config.LOCAL_BASE_PATH)
-    drive_checker = DriveChecker(base_path)
-    scanner = BucketScanner(s3, state)
-    glacier_restorer = GlacierRestorer(s3, state)
-    glacier_waiter = GlacierWaiter(s3, state)
-    bucket_migrator = BucketMigrator(s3, state, base_path)
-    migration_orchestrator = BucketMigrationOrchestrator(s3, state, base_path, drive_checker, bucket_migrator)
-    status_reporter = StatusReporter(state)
-    components = MigrationComponents(
-        drive_checker=drive_checker,
-        scanner=scanner,
-        glacier_restorer=glacier_restorer,
-        glacier_waiter=glacier_waiter,
-        migration_orchestrator=migration_orchestrator,
-        bucket_migrator=bucket_migrator,
-        status_reporter=status_reporter,
-    )
-    return S3MigrationV2(state, components)
+    return S3MigrationV2(s3, state, base_path)
 
 
 def run_smoke_test():
     """Run the smoke test using the shared helper module."""
-    smoke_tests.run_smoke_test(config, DriveChecker, create_migrator)
+    smoke_tests.run_smoke_test(config, check_drive_available, create_migrator)
 
 
 def main():

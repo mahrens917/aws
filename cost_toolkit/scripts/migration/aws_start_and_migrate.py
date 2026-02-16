@@ -56,7 +56,7 @@ for dev in $(lsblk -d -o NAME -n | grep -E "nvme|xvd"); do
         SIZE_BYTES=$(lsblk -b -d -o SIZE -n $FULL_DEV 2>/dev/null)
         SIZE_GB=$((SIZE_BYTES / 1024 / 1024 / 1024))
 
-        echo "Device $FULL_DEV: ${SIZE_GB}GB"  # type: ignore
+        echo "Device $FULL_DEV: ${SIZE_GB}GB"
 
         # 384GB volume (allow some variance)
         if [ "$SIZE_GB" -gt 350 ] && [ "$SIZE_GB" -lt 450 ]; then

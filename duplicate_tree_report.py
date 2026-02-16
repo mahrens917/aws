@@ -1,7 +1,5 @@
 """Public API for duplicate tree detection plus CLI shim."""
 
-# pylint: disable=import-outside-toplevel
-
 from __future__ import annotations
 
 import sys
@@ -24,7 +22,7 @@ def main(argv=None) -> int:
     if "duplicate_tree_cli" in sys.modules:
         cli = sys.modules["duplicate_tree_cli"]
     else:
-        from duplicate_tree import cli  # pylint: disable=import-outside-toplevel
+        from duplicate_tree import cli
 
     return cli.main(argv)
 

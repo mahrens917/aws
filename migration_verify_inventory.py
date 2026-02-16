@@ -94,24 +94,19 @@ def _validate_inventory(expected_keys: Set[str], local_keys: Set[str]) -> List[s
     return errors
 
 
-class FileInventoryChecker:  # pylint: disable=too-few-public-methods
-    """Checks local file inventory against expected files."""
-
-    def __init__(self, state: "MigrationStateV2", base_path: Path):
-        self.state = state
-        self.base_path = base_path
-
-    def load_expected_files(self, bucket: str) -> Dict[str, Dict]:
-        """Load expected file metadata for the requested bucket."""
-        return _load_expected_file_map(self.state, bucket)
-
-    def scan_local_files(self, bucket: str, expected_files: int) -> Dict[str, Path]:
-        """Scan the on-disk directory for the bucket and return discovered files."""
-        return _scan_local_directory(self.base_path, bucket, expected_files)
-
-    def check_inventory(self, expected_keys: Set[str], local_keys: Set[str]) -> List[str]:
-        """Compare inventory results and raise when they differ."""
-        return _validate_inventory(expected_keys, local_keys)
+def load_expected_files(state: "MigrationStateV2", bucket: str) -> Dict[str, Dict]:
+    """Load expected file metadata for the requested bucket."""
+    return _load_expected_file_map(state, bucket)
 
 
-__all__ = ["FileInventoryChecker"]
+def scan_local_files(base_path: Path, bucket: str, expected_files: int) -> Dict[str, Path]:
+    """Scan the on-disk directory for the bucket and return discovered files."""
+    return _scan_local_directory(base_path, bucket, expected_files)
+
+
+def check_inventory(expected_keys: Set[str], local_keys: Set[str]) -> List[str]:
+    """Compare inventory results and raise when they differ."""
+    return _validate_inventory(expected_keys, local_keys)
+
+
+__all__ = ["check_inventory", "load_expected_files", "scan_local_files"]

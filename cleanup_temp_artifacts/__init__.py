@@ -4,7 +4,7 @@ Cleanup temporary artifacts package.
 Scan backup trees for disposable cache/temp artifacts and optionally delete them.
 """
 
-from . import (  # pylint: disable=no-name-in-module
+from . import (
     args_parser,
     cache,
     categories,

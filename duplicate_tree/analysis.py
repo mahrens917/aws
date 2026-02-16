@@ -38,9 +38,7 @@ class ScanFingerprint:
     checksum: str
 
 
-def build_directory_index_from_db(  # pylint: disable=too-many-locals
-    db_path: str, progress_label: str = "Scanning files"
-) -> tuple[DirectoryIndex, ScanFingerprint]:
+def build_directory_index_from_db(db_path: str, progress_label: str = "Scanning files") -> tuple[DirectoryIndex, ScanFingerprint]:
     """Stream the files table and construct the in-memory directory index."""
     index = DirectoryIndex()
     conn = sqlite3.connect(db_path)

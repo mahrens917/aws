@@ -100,7 +100,7 @@ def print_alternative_setup_instructions():
     print("💡 Alternative setup using AWS CLI:")
     print("1. Create trust policy file:")
     print(
-        '   echo \'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"vmie.amazonaws.com"},"Action":"sts:AssumeRole","Condition":{"StringEquals":{"sts:Externalid":"vmimport"}}}]}\' > trust-policy.json'  # pylint: disable=line-too-long
+        '   echo \'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"vmie.amazonaws.com"},"Action":"sts:AssumeRole","Condition":{"StringEquals":{"sts:Externalid":"vmimport"}}}]}\' > trust-policy.json'
     )
     print()
     print("2. Create the role:")
@@ -108,7 +108,7 @@ def print_alternative_setup_instructions():
     print()
     print("3. Create policy file:")
     print(
-        '   echo \'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetBucketLocation","s3:GetObject","s3:ListBucket","s3:PutObject","s3:GetBucketAcl"],"Resource":["arn:aws:s3:::*"]},{"Effect":"Allow","Action":["ec2:ModifySnapshotAttribute","ec2:CopySnapshot","ec2:RegisterImage","ec2:Describe*"],"Resource":"*"}]}\' > role-policy.json'  # pylint: disable=line-too-long
+        '   echo \'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Action":["s3:GetBucketLocation","s3:GetObject","s3:ListBucket","s3:PutObject","s3:GetBucketAcl"],"Resource":["arn:aws:s3:::*"]},{"Effect":"Allow","Action":["ec2:ModifySnapshotAttribute","ec2:CopySnapshot","ec2:RegisterImage","ec2:Describe*"],"Resource":"*"}]}\' > role-policy.json'
     )
     print()
     print("4. Attach policy:")

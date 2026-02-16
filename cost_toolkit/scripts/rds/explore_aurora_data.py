@@ -4,14 +4,15 @@
 import importlib
 import os
 from types import SimpleNamespace
+from typing import Any
 
+psycopg2: Any = None
+PSYCOPG2_AVAILABLE = False
 try:
-    import psycopg2  # type: ignore[import-not-found]
-
+    psycopg2 = importlib.import_module("psycopg2")
     PSYCOPG2_AVAILABLE = True
 except ImportError:
-    psycopg2 = None  # type: ignore[assignment]
-    PSYCOPG2_AVAILABLE = False
+    pass
 
 from cost_toolkit.scripts.rds.db_inspection_common import (
     analyze_tables,
@@ -73,7 +74,7 @@ def _import_psycopg2():
         return None
 
 
-def _resolve_psycopg2():
+def _resolve_psycopg2() -> Any:
     """Return a psycopg2-like module or None if unavailable."""
     if PSYCOPG2_AVAILABLE and psycopg2 is not None:
         return psycopg2
@@ -109,7 +110,7 @@ def explore_aurora_database():
     conn = None
     cursor = None
     try:
-        conn = psycopg2_local.connect(  # type: ignore[union-attr]
+        conn = psycopg2_local.connect(
             host=host,
             port=port,
             database=database,
@@ -118,7 +119,7 @@ def explore_aurora_database():
             connect_timeout=30,
         )
         print("✅ Connected successfully to Aurora Serverless v2!")
-    except psycopg2_local.Error as e:  # type: ignore[union-attr]
+    except psycopg2_local.Error as e:
         print(f"❌ Connection failed: {e}")
         return False
 

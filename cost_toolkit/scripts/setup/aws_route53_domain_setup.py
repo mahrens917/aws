@@ -70,7 +70,7 @@ def update_domain_nameservers_at_registrar(domain_name, nameservers):
 
             response = route53domains.update_domain_nameservers(DomainName=domain_name, Nameservers=nameserver_list)
 
-            operation_id = response.get("OperationId", None)
+            operation_id = response.get("OperationId")
             print(f"  ✅ Nameserver update initiated (Operation ID: {operation_id})")
             print("  ⏳ Changes may take up to 48 hours to propagate globally")
         except ClientError as e:
@@ -84,10 +84,11 @@ def update_domain_nameservers_at_registrar(domain_name, nameservers):
                 print("  💡 Log into your domain registrar (GoDaddy, Namecheap, etc.) and update the nameservers")
                 return False
             raise
-        return True  # noqa: TRY300
     except ClientError as e:
         print(f"❌ Route53 Domains API error: {e}")
         return False
+    else:
+        return True
 
 
 def verify_canva_dns_setup(domain_name, zone_id):

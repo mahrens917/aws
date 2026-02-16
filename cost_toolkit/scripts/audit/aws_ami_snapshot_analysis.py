@@ -23,16 +23,16 @@ def get_ami_details(ec2_client, ami_id):
             ami = response["Images"][0]
             return {
                 "ami_id": ami_id,
-                "name": ami.get("Name", "N/A"),
-                "description": ami.get("Description", "N/A"),
-                "state": ami.get("State", "N/A"),
-                "creation_date": ami.get("CreationDate", "N/A"),
-                "owner_id": ami.get("OwnerId", "N/A"),
-                "public": ami.get("Public", False),
-                "platform": ami.get("Platform", "Linux"),
-                "architecture": ami.get("Architecture", "N/A"),
-                "virtualization_type": ami.get("VirtualizationType", "N/A"),
-                "root_device_type": ami.get("RootDeviceType", "N/A"),
+                "name": ami.get("Name"),
+                "description": ami.get("Description"),
+                "state": ami.get("State"),
+                "creation_date": ami.get("CreationDate"),
+                "owner_id": ami.get("OwnerId"),
+                "public": ami.get("Public"),
+                "platform": ami.get("Platform"),
+                "architecture": ami.get("Architecture"),
+                "virtualization_type": ami.get("VirtualizationType"),
+                "root_device_type": ami.get("RootDeviceType"),
                 "block_device_mappings": (ami.get("BlockDeviceMappings") or []),
                 "tags": ami.get("Tags") or [],
             }
@@ -65,8 +65,8 @@ def check_ami_usage(ec2_client, ami_id):
                     {
                         "instance_id": instance["InstanceId"],
                         "state": instance["State"]["Name"],
-                        "launch_time": instance.get("LaunchTime", "N/A"),
-                        "instance_type": instance.get("InstanceType", "N/A"),
+                        "launch_time": instance.get("LaunchTime"),
+                        "instance_type": instance.get("InstanceType"),
                         "tags": instance_tags,
                     }
                 )

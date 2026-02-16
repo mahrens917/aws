@@ -137,7 +137,7 @@ class TestDeleteSnapshot:
         delete_snapshot("snap-123456", "us-east-1")
 
         captured = capsys.readouterr()
-        assert "No description" in captured.out
+        assert "Description: None" in captured.out
 
 
 class TestGetBucketRegion:

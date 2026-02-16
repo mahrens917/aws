@@ -104,7 +104,7 @@ class TestProcessSingleAccelerator:
                     _, _ = process_single_accelerator(accelerator)
 
         captured = capsys.readouterr()
-        assert "Unnamed" in captured.out
+        assert "Processing Accelerator: None" in captured.out
 
 
 class TestPrintCleanupSummary:

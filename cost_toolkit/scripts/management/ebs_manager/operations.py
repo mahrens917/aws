@@ -34,8 +34,8 @@ def _extract_basic_volume_info(volume: Dict, volume_id: str, region: str) -> Dic
         "create_time": volume["CreateTime"],
         "availability_zone": volume["AvailabilityZone"],
         "encrypted": volume["Encrypted"],
-        "iops": volume.get("Iops", "N/A"),
-        "throughput": volume.get("Throughput", "N/A"),
+        "iops": volume.get("Iops"),
+        "throughput": volume.get("Throughput"),
         "tags": get_volume_tags(volume),
     }
 

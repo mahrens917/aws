@@ -1,7 +1,5 @@
 """Real S3 smoke-test flow for migrate_v2."""
 
-# pylint: disable=duplicate-code,too-many-instance-attributes
-
 from __future__ import annotations
 
 import builtins
@@ -45,12 +43,12 @@ def _create_bucket(s3_client, bucket_name: str, region: str):
 def _collect_delete_objects(page):
     """Collect all objects and delete markers from a page for batch deletion."""
     objects = []
-    versions = page.get("Versions", [])
-    for version in versions:
-        objects.append({"Key": version["Key"], "VersionId": version["VersionId"]})
-    delete_markers = page.get("DeleteMarkers", [])
-    for marker in delete_markers:
-        objects.append({"Key": marker["Key"], "VersionId": marker["VersionId"]})
+    if "Versions" in page:
+        for version in page["Versions"]:
+            objects.append({"Key": version["Key"], "VersionId": version["VersionId"]})
+    if "DeleteMarkers" in page:
+        for marker in page["DeleteMarkers"]:
+            objects.append({"Key": marker["Key"], "VersionId": marker["VersionId"]})
     return objects
 
 
@@ -64,7 +62,8 @@ def _delete_bucket_and_contents(s3_client, bucket: str):
                 s3_client.delete_objects(Bucket=bucket, Delete={"Objects": objects})
         s3_client.delete_bucket(Bucket=bucket)
     except ClientError as exc:  # pragma: no cover - cleanup best effort
-        error_code = exc.response.get("Error", {}).get("Code")
+        error_obj = exc.response.get("Error")
+        error_code = error_obj.get("Code") if error_obj else None
         if error_code not in {"NoSuchBucket", "404"}:
             raise
 
@@ -104,8 +103,7 @@ class RealSmokeContext:
             )
         state_db_path = temp_dir / "smoke_state.db"
         external_drive_root = Path(deps.config.LOCAL_BASE_PATH)
-        drive_checker = deps.drive_checker_cls(external_drive_root)
-        drive_checker.check_available()
+        deps.drive_checker_fn(external_drive_root)
         local_bucket_path = external_drive_root / bucket_name
         if local_bucket_path.exists():
             msg = f"Smoke-test path already exists: {local_bucket_path}"

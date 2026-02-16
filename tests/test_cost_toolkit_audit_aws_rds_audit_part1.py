@@ -103,11 +103,11 @@ class TestProcessRdsInstance:
         assert cost == 0.0
         captured = capsys.readouterr()
         assert "Instance ID: minimal-db" in captured.out
-        assert "Engine: mysql Unknown" in captured.out
-        assert "Storage: Unknown GB" in captured.out
-        assert "Storage Type: Unknown" in captured.out
-        assert "Multi-AZ: False" in captured.out
-        assert "Creation Time: Unknown" in captured.out
+        assert "Engine: mysql None" in captured.out
+        assert "Storage: None GB" in captured.out
+        assert "Storage Type: None" in captured.out
+        assert "Multi-AZ: None" in captured.out
+        assert "Creation Time: None" in captured.out
 
 
 class TestProcessAuroraClusterBasic:
@@ -165,11 +165,11 @@ class TestProcessAuroraClusterBasic:
 
         captured = capsys.readouterr()
         assert "Cluster ID: minimal-cluster" in captured.out
-        assert "Engine: aurora Unknown" in captured.out
+        assert "Engine: aurora None" in captured.out
         assert "Database Name: None" in captured.out
-        assert "Master Username: Unknown" in captured.out
-        assert "Multi-AZ: False" in captured.out
-        assert "Storage Encrypted: False" in captured.out
+        assert "Master Username: None" in captured.out
+        assert "Multi-AZ: None" in captured.out
+        assert "Storage Encrypted: None" in captured.out
 
 
 class TestProcessAuroraClusterServerless:

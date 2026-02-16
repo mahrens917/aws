@@ -6,7 +6,7 @@ import json
 
 import pytest
 
-from migration_state_managers import BucketStateManager
+from migration_state_managers import BucketScanStatus, BucketStateManager, BucketVerificationResult
 
 DEFAULT_BUCKET = "test-bucket"
 DEFAULT_FILE_COUNT = 100
@@ -30,11 +30,13 @@ def bucket_mgr(db_conn):
 def test_save_bucket_status_inserts_record(bucket_mgr, db_conn):
     """Test saving bucket status"""
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=MIXED_STORAGE_COUNTS,
-        scan_complete=True,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=MIXED_STORAGE_COUNTS,
+            scan_complete=True,
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -52,19 +54,23 @@ def test_save_bucket_status_inserts_record(bucket_mgr, db_conn):
 def test_save_bucket_status_updates_existing(bucket_mgr, db_conn):
     """Test that saving bucket status updates existing record"""
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=STANDARD_STORAGE_COUNTS,
-        scan_complete=False,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=STANDARD_STORAGE_COUNTS,
+            scan_complete=False,
+        )
     )
 
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=UPDATED_FILE_COUNT,
-        total_size=UPDATED_TOTAL_SIZE,
-        storage_classes={"STANDARD": UPDATED_FILE_COUNT},
-        scan_complete=True,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=UPDATED_FILE_COUNT,
+            total_size=UPDATED_TOTAL_SIZE,
+            storage_classes={"STANDARD": UPDATED_FILE_COUNT},
+            scan_complete=True,
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -78,10 +84,12 @@ def test_save_bucket_status_updates_existing(bucket_mgr, db_conn):
 def test_save_bucket_status_preserves_created_at(bucket_mgr, db_conn):
     """Test that created_at timestamp is preserved on update"""
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=STANDARD_STORAGE_COUNTS,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=STANDARD_STORAGE_COUNTS,
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -92,10 +100,12 @@ def test_save_bucket_status_preserves_created_at(bucket_mgr, db_conn):
         original_time = original["created_at"]
 
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=2 * DEFAULT_FILE_COUNT,
-        total_size=DOUBLE_TOTAL_SIZE,
-        storage_classes={"STANDARD": 2 * DEFAULT_FILE_COUNT},
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=2 * DEFAULT_FILE_COUNT,
+            total_size=DOUBLE_TOTAL_SIZE,
+            storage_classes={"STANDARD": 2 * DEFAULT_FILE_COUNT},
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -110,10 +120,12 @@ def test_save_bucket_status_preserves_created_at(bucket_mgr, db_conn):
 def test_mark_bucket_sync_complete(bucket_mgr, db_conn):
     """Test marking bucket as synced"""
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=FULL_STANDARD_STORAGE,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=FULL_STANDARD_STORAGE,
+        )
     )
 
     bucket_mgr.mark_bucket_sync_complete(DEFAULT_BUCKET)
@@ -130,19 +142,23 @@ def test_mark_bucket_sync_complete(bucket_mgr, db_conn):
 def test_mark_bucket_verify_complete(bucket_mgr, db_conn):
     """Test marking bucket as verified"""
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=FULL_STANDARD_STORAGE,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=FULL_STANDARD_STORAGE,
+        )
     )
 
     bucket_mgr.mark_bucket_verify_complete(
-        bucket=DEFAULT_BUCKET,
-        verified_file_count=DEFAULT_FILE_COUNT,
-        size_verified_count=DEFAULT_FILE_COUNT,
-        checksum_verified_count=CHECKSUM_VERIFIED_COUNT,
-        total_bytes_verified=DEFAULT_TOTAL_SIZE,
-        local_file_count=DEFAULT_FILE_COUNT,
+        BucketVerificationResult(
+            bucket=DEFAULT_BUCKET,
+            verified_file_count=DEFAULT_FILE_COUNT,
+            size_verified_count=DEFAULT_FILE_COUNT,
+            checksum_verified_count=CHECKSUM_VERIFIED_COUNT,
+            total_bytes_verified=DEFAULT_TOTAL_SIZE,
+            local_file_count=DEFAULT_FILE_COUNT,
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -159,16 +175,20 @@ def test_mark_bucket_verify_complete(bucket_mgr, db_conn):
 def test_mark_bucket_verify_complete_with_partial_data(bucket_mgr, db_conn):
     """Test marking bucket verified with only some verification fields"""
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=FULL_STANDARD_STORAGE,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=FULL_STANDARD_STORAGE,
+        )
     )
 
     bucket_mgr.mark_bucket_verify_complete(
-        bucket=DEFAULT_BUCKET,
-        verified_file_count=DEFAULT_FILE_COUNT,
-        size_verified_count=DEFAULT_FILE_COUNT,
+        BucketVerificationResult(
+            bucket=DEFAULT_BUCKET,
+            verified_file_count=DEFAULT_FILE_COUNT,
+            size_verified_count=DEFAULT_FILE_COUNT,
+        )
     )
 
     with db_conn.get_connection() as conn:
@@ -183,10 +203,12 @@ def test_mark_bucket_verify_complete_with_partial_data(bucket_mgr, db_conn):
 def test_mark_bucket_delete_complete(bucket_mgr, db_conn):
     """Test marking bucket as deleted from S3"""
     bucket_mgr.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=FULL_STANDARD_STORAGE,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=FULL_STANDARD_STORAGE,
+        )
     )
 
     bucket_mgr.mark_bucket_delete_complete(DEFAULT_BUCKET)

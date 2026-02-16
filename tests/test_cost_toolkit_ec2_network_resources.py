@@ -27,7 +27,7 @@ def test_get_common_regions():
 
 
 # Tests for describe_addresses
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_addresses_success(mock_create_client):
     """Test describe_addresses returns list of Elastic IPs."""
     mock_ec2 = MagicMock()
@@ -49,7 +49,7 @@ def test_describe_addresses_success(mock_create_client):
     mock_ec2.describe_addresses.assert_called_once()
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_addresses_empty_result(mock_create_client):
     """Test describe_addresses returns empty list when no addresses found."""
     mock_ec2 = MagicMock()
@@ -61,7 +61,7 @@ def test_describe_addresses_empty_result(mock_create_client):
     assert_equal(result, [])
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_addresses_with_credentials(mock_create_client):
     """Test describe_addresses passes credentials to client factory."""
     mock_ec2 = MagicMock()
@@ -77,7 +77,7 @@ def test_describe_addresses_with_credentials(mock_create_client):
     )
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_addresses_client_error(mock_create_client):
     """Test describe_addresses raises ClientError on API failure."""
     mock_ec2 = MagicMock()
@@ -92,7 +92,7 @@ def test_describe_addresses_client_error(mock_create_client):
 
 
 # Tests for describe_network_interfaces
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_network_interfaces_success(mock_create_client):
     """Test describe_network_interfaces returns list of network interfaces."""
     mock_ec2 = MagicMock()
@@ -114,7 +114,7 @@ def test_describe_network_interfaces_success(mock_create_client):
     mock_ec2.describe_network_interfaces.assert_called_once_with()
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_network_interfaces_with_filters(mock_create_client):
     """Test describe_network_interfaces passes filters to API."""
     mock_ec2 = MagicMock()
@@ -127,7 +127,7 @@ def test_describe_network_interfaces_with_filters(mock_create_client):
     mock_ec2.describe_network_interfaces.assert_called_once_with(Filters=filters)
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_network_interfaces_empty_result(mock_create_client):
     """Test describe_network_interfaces returns empty list when none found."""
     mock_ec2 = MagicMock()
@@ -139,7 +139,7 @@ def test_describe_network_interfaces_empty_result(mock_create_client):
     assert_equal(result, [])
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_network_interfaces_with_credentials(mock_create_client):
     """Test describe_network_interfaces passes credentials to client factory."""
     mock_ec2 = MagicMock()
@@ -155,7 +155,7 @@ def test_describe_network_interfaces_with_credentials(mock_create_client):
     )
 
 
-@patch("cost_toolkit.scripts.aws_ec2_operations.create_ec2_client")
+@patch("cost_toolkit.scripts.ec2_describe_ops.create_ec2_client")
 def test_describe_network_interfaces_client_error(mock_create_client):
     """Test describe_network_interfaces raises ClientError on API failure."""
     mock_ec2 = MagicMock()

@@ -16,35 +16,29 @@ from migration_utils import (
 from migration_verify_common import check_verification_errors
 
 
-class VerificationProgressTracker:  # pylint: disable=too-few-public-methods
-    """Tracks and displays verification progress."""
+def update_verification_progress(
+    progress: ProgressTracker,
+    start_time: float,
+    verified_count: int,
+    total_bytes_verified: int,
+    expected_files: int,
+    expected_size: int,
+) -> None:
+    """Update progress display if enough time has elapsed."""
+    if not (progress.should_update() or verified_count % 100 == 0):
+        return
 
-    def __init__(self):
-        self.progress = ProgressTracker(update_interval=2.0)
-
-    def update_progress(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        start_time: float,
-        verified_count: int,
-        total_bytes_verified: int,
-        expected_files: int,
-        expected_size: int,
-    ) -> None:
-        """Update progress display if enough time has elapsed."""
-        if not (self.progress.should_update() or verified_count % 100 == 0):
-            return
-
-        elapsed = time.time() - start_time
-        file_pct = (verified_count / expected_files * 100) if expected_files > 0 else 0
-        byte_pct = (total_bytes_verified / expected_size * 100) if expected_size > 0 else 0
-        eta_str = calculate_eta_bytes(elapsed, total_bytes_verified, expected_size)
-        verified_bytes = format_bytes(total_bytes_verified, binary_units=False)
-        expected_bytes = format_bytes(expected_size, binary_units=False)
-        progress_str = (
-            f"Progress: {verified_count:,}/{expected_files:,} files ({file_pct:.1f}%), "
-            f"{verified_bytes}/{expected_bytes} ({byte_pct:.1f}%), ETA: {eta_str}  "
-        )
-        print(f"\r  {progress_str}", end="", flush=True)
+    elapsed = time.time() - start_time
+    file_pct = (verified_count / expected_files * 100) if expected_files > 0 else 0
+    byte_pct = (total_bytes_verified / expected_size * 100) if expected_size > 0 else 0
+    eta_str = calculate_eta_bytes(elapsed, total_bytes_verified, expected_size)
+    verified_bytes = format_bytes(total_bytes_verified, binary_units=False)
+    expected_bytes = format_bytes(expected_size, binary_units=False)
+    progress_str = (
+        f"Progress: {verified_count:,}/{expected_files:,} files ({file_pct:.1f}%), "
+        f"{verified_bytes}/{expected_bytes} ({byte_pct:.1f}%), ETA: {eta_str}  "
+    )
+    print(f"\r  {progress_str}", end="", flush=True)
 
 
 def verify_multipart_file(s3_key: str, file_path: Path, stats: Dict) -> None:
@@ -102,48 +96,44 @@ def verify_single_file(s3_key: str, local_files: Dict, expected_file_map: Dict, 
         verify_singlepart_file(s3_key, file_path, expected_etag, stats)
 
 
-class FileChecksumVerifier:  # pylint: disable=too-few-public-methods
-    """Verifies file sizes and checksums."""
-
-    def __init__(self):
-        self.progress = VerificationProgressTracker()
-
-    def verify_files(
-        self,
-        local_files: Dict,
-        expected_file_map: Dict,
-        expected_files: int,
-        expected_size: int,
-    ) -> Dict:
-        """Validate files by recomputing sizes and checksums."""
-        print("  Verifying file sizes and checksums...")
-        print("  (This reads all files to compute MD5/ETag - may take time for large files)\n")
-        stats = {
-            "verified_count": 0,
-            "size_verified": 0,
-            "checksum_verified": 0,
-            "total_bytes_verified": 0,
-            "verification_errors": [],
-        }
-        start_time = time.time()
-        for s3_key in sorted(expected_file_map.keys()):
-            verify_single_file(s3_key, local_files, expected_file_map, stats)
-            self.progress.update_progress(
-                start_time,
-                stats["verified_count"],
-                stats["total_bytes_verified"],
-                expected_files,
-                expected_size,
-            )
-        print("\n")
-        check_verification_errors(stats["verification_errors"])
-        return {k: v for k, v in stats.items() if k != "verification_errors"}
-
-    # Public accessors for testing.
-    verify_single_file = staticmethod(verify_single_file)
-    verify_multipart_file = staticmethod(verify_multipart_file)
-    verify_singlepart_file = staticmethod(verify_singlepart_file)
-    compute_etag = staticmethod(compute_etag)
+def verify_files(
+    local_files: Dict,
+    expected_file_map: Dict,
+    expected_files: int,
+    expected_size: int,
+) -> Dict:
+    """Validate files by recomputing sizes and checksums."""
+    print("  Verifying file sizes and checksums...")
+    print("  (This reads all files to compute MD5/ETag - may take time for large files)\n")
+    stats = {
+        "verified_count": 0,
+        "size_verified": 0,
+        "checksum_verified": 0,
+        "total_bytes_verified": 0,
+        "verification_errors": [],
+    }
+    progress = ProgressTracker(update_interval=2.0)
+    start_time = time.time()
+    for s3_key in sorted(expected_file_map.keys()):
+        verify_single_file(s3_key, local_files, expected_file_map, stats)
+        update_verification_progress(
+            progress,
+            start_time,
+            stats["verified_count"],
+            stats["total_bytes_verified"],
+            expected_files,
+            expected_size,
+        )
+    print("\n")
+    check_verification_errors(stats["verification_errors"])
+    return {k: v for k, v in stats.items() if k != "verification_errors"}
 
 
-__all__ = ["FileChecksumVerifier", "VerificationProgressTracker"]
+__all__ = [
+    "compute_etag",
+    "update_verification_progress",
+    "verify_files",
+    "verify_multipart_file",
+    "verify_single_file",
+    "verify_singlepart_file",
+]

@@ -14,12 +14,12 @@ def _process_elastic_ip_address(addr, region_name):
         addr_tags = addr["Tags"]
     ip_info = {
         "region": region_name,
-        "public_ip": addr.get("PublicIp", "N/A"),
-        "allocation_id": addr.get("AllocationId", "N/A"),
+        "public_ip": addr.get("PublicIp"),
+        "allocation_id": addr.get("AllocationId"),
         "association_id": addr.get("AssociationId"),
         "instance_id": addr.get("InstanceId"),
         "network_interface_id": addr.get("NetworkInterfaceId"),
-        "domain": addr.get("Domain", "N/A"),
+        "domain": addr.get("Domain"),
         "tags": addr_tags,
     }
 

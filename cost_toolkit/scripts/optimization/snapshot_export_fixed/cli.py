@@ -169,7 +169,8 @@ def export_snapshots_to_s3_fixed():
 
     confirmation = input("Type 'EXPORT TO S3' to proceed with snapshot export: ")
     if confirmation != "EXPORT TO S3":
-        raise ValueError("Operation cancelled by user")  # noqa: TRY003
+        msg = "Operation cancelled by user"
+        raise ValueError(msg)
 
     print()
     print("🚨 Proceeding with snapshot export to S3...")
@@ -196,7 +197,8 @@ def export_snapshots_to_s3_fixed():
 
         except ClientError as e:
             print(f"   ❌ Failed to export {snap_info['snapshot_id']}: {e}")
-            raise ExportTaskFailedException(f"Export failed for {snap_info['snapshot_id']}: {e}") from e  # noqa: TRY003
+            msg = f"Export failed for {snap_info['snapshot_id']}: {e}"
+            raise ExportTaskFailedException(msg) from e
         print()
 
     _print_final_summary_fixed(len(export_results), export_results, snapshots_to_export)

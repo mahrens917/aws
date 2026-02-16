@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from migration_state_managers import FileMetadata
 from migration_state_v2 import DatabaseConnection, MigrationStateV2
 from tests.assertions import assert_equal
 
@@ -23,12 +24,14 @@ def test_migration_state_v2_add_file(tmp_path: Path):
     state = MigrationStateV2(str(db_path))
 
     state.add_file(
-        bucket="test-bucket",
-        key="test-key.txt",
-        size=1024,
-        etag="abc123",
-        storage_class="STANDARD",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="test-key.txt",
+            size=1024,
+            etag="abc123",
+            storage_class="STANDARD",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
 
     with state.db_conn.get_connection() as conn:
@@ -48,21 +51,25 @@ def test_migration_state_v2_add_file_idempotent(tmp_path: Path):
     state = MigrationStateV2(str(db_path))
 
     state.add_file(
-        bucket="bucket1",
-        key="key1",
-        size=100,
-        etag="e1",
-        storage_class="STANDARD",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="bucket1",
+            key="key1",
+            size=100,
+            etag="e1",
+            storage_class="STANDARD",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
 
     state.add_file(
-        bucket="bucket1",
-        key="key1",
-        size=100,
-        etag="e1",
-        storage_class="STANDARD",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="bucket1",
+            key="key1",
+            size=100,
+            etag="e1",
+            storage_class="STANDARD",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
 
     with state.db_conn.get_connection() as conn:
@@ -77,12 +84,14 @@ def test_migration_state_v2_mark_glacier_restore_requested(tmp_path: Path):
     state = MigrationStateV2(str(db_path))
 
     state.add_file(
-        bucket="bucket1",
-        key="glacier-key",
-        size=1000,
-        etag="e1",
-        storage_class="GLACIER",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="bucket1",
+            key="glacier-key",
+            size=1000,
+            etag="e1",
+            storage_class="GLACIER",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
 
     state.mark_glacier_restore_requested("bucket1", "glacier-key")
@@ -102,12 +111,14 @@ def test_migration_state_v2_mark_glacier_restored(tmp_path: Path):
     state = MigrationStateV2(str(db_path))
 
     state.add_file(
-        bucket="bucket1",
-        key="glacier-key",
-        size=1000,
-        etag="e1",
-        storage_class="GLACIER",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="bucket1",
+            key="glacier-key",
+            size=1000,
+            etag="e1",
+            storage_class="GLACIER",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
 
     state.mark_glacier_restore_requested("bucket1", "glacier-key")
@@ -128,20 +139,24 @@ def test_migration_state_v2_get_glacier_files_needing_restore(tmp_path: Path):
     state = MigrationStateV2(str(db_path))
 
     state.add_file(
-        bucket="b1",
-        key="glacier1",
-        size=100,
-        etag="e1",
-        storage_class="GLACIER",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="b1",
+            key="glacier1",
+            size=100,
+            etag="e1",
+            storage_class="GLACIER",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
     state.add_file(
-        bucket="b1",
-        key="standard1",
-        size=100,
-        etag="e2",
-        storage_class="STANDARD",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="b1",
+            key="standard1",
+            size=100,
+            etag="e2",
+            storage_class="STANDARD",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
 
     files = state.get_glacier_files_needing_restore()
@@ -157,12 +172,14 @@ def test_migration_state_v2_get_files_restoring(tmp_path: Path):
     state = MigrationStateV2(str(db_path))
 
     state.add_file(
-        bucket="b1",
-        key="glacier1",
-        size=100,
-        etag="e1",
-        storage_class="GLACIER",
-        last_modified="2025-10-31T00:00:00Z",
+        FileMetadata(
+            bucket="b1",
+            key="glacier1",
+            size=100,
+            etag="e1",
+            storage_class="GLACIER",
+            last_modified="2025-10-31T00:00:00Z",
+        )
     )
     state.mark_glacier_restore_requested("b1", "glacier1")
 

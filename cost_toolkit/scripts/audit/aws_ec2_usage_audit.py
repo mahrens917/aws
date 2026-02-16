@@ -120,8 +120,8 @@ def _process_instance_details(cloudwatch, instance_details, region_name, start_t
     instance_id = instance_details["instance_id"]
     instance_type = instance_details["instance_type"]
     state = instance_details["state"]
-    launch_time = instance_details.get("launch_time", None)
-    name = instance_details.get("name", None)
+    launch_time = instance_details.get("launch_time")
+    name = instance_details.get("name")
 
     print(f"Instance: {instance_id} ({name})")
     print(f"  Type: {instance_type}")
@@ -205,8 +205,8 @@ def _print_low_usage_recommendations(all_instances):
     """Print recommendations for low usage instances."""
     low_usage_instances = []
     for inst in all_instances:
-        usage_level = inst.get("usage_level", "")
-        if "LOW" in usage_level or "VERY LOW" in usage_level:
+        usage_level = inst.get("usage_level")
+        if usage_level and ("LOW" in usage_level or "VERY LOW" in usage_level):
             low_usage_instances.append(inst)
 
     if low_usage_instances:

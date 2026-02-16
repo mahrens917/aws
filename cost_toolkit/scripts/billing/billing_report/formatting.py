@@ -51,7 +51,7 @@ def format_combined_billing_report(cost_data, usage_data):
         service_cost = data["cost"]
         percentage = (service_cost / total_cost * 100) if total_cost > 0 else 0
         service_key = service.upper()
-        status_message = resolved_services.get(service_key, "")
+        status_message = resolved_services.get(service_key)
 
         print(f"\n{service.upper()}")
         print("=" * 120)

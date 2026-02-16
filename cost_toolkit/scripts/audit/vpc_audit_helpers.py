@@ -93,7 +93,7 @@ def _collect_vpc_route_tables(ec2_client, vpc_id):
                 {
                     "route_table_id": rt["RouteTableId"],
                     "name": _get_resource_name(rt_tags),
-                    "is_main": any(assoc.get("Main", False) for assoc in associations),
+                    "is_main": any(assoc.get("Main") for assoc in associations),
                     "associations": len(associations),
                     "routes": len(routes),
                 }

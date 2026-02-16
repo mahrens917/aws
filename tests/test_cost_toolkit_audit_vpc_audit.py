@@ -81,9 +81,9 @@ class TestProcessElasticIpAddress:
 
         ip_info, monthly_cost = _process_elastic_ip_address(addr, "eu-west-1")
 
-        assert ip_info["public_ip"] == "N/A"
-        assert ip_info["allocation_id"] == "N/A"
-        assert ip_info["domain"] == "N/A"
+        assert ip_info["public_ip"] is None
+        assert ip_info["allocation_id"] is None
+        assert ip_info["domain"] is None
         assert ip_info["tags"] == []
         assert abs(monthly_cost - 3.60) < 0.01
 

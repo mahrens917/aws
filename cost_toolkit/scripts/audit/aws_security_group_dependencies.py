@@ -32,8 +32,8 @@ def _collect_network_interface_deps(ec2_client, group_id):
             {
                 "interface_id": eni["NetworkInterfaceId"],
                 "status": eni["Status"],
-                "description": eni.get("Description", "N/A"),
-                "attachment": eni.get("Attachment", {}),
+                "description": eni.get("Description"),
+                "attachment": eni.get("Attachment"),
                 "vpc_id": eni["VpcId"],
                 "subnet_id": eni["SubnetId"],
             }
@@ -72,8 +72,8 @@ def _check_inbound_rules(sg, group_id):
         for group_pair in group_pairs:
             pair_group_id = group_pair.get("GroupId")
             if pair_group_id == group_id:
-                from_port = rule.get("FromPort", "N/A")
-                to_port = rule.get("ToPort", "N/A")
+                from_port = rule.get("FromPort")
+                to_port = rule.get("ToPort")
                 rules.append(
                     {
                         "referencing_sg": sg["GroupId"],
@@ -99,8 +99,8 @@ def _check_outbound_rules(sg, group_id):
         for group_pair in group_pairs:
             pair_group_id = group_pair.get("GroupId")
             if pair_group_id == group_id:
-                from_port = rule.get("FromPort", "N/A")
-                to_port = rule.get("ToPort", "N/A")
+                from_port = rule.get("FromPort")
+                to_port = rule.get("ToPort")
                 rules.append(
                     {
                         "referencing_sg": sg["GroupId"],
@@ -150,7 +150,9 @@ def _collect_rds_deps(group_id, region, aws_access_key_id, aws_secret_access_key
                 vpc_security_groups = db["VpcSecurityGroups"]
             for sg in vpc_security_groups:
                 if sg["VpcSecurityGroupId"] == group_id:
-                    db_subnet_group = db.get("DbSubnetGroup", {})
+                    db_subnet_group = {}
+                    if "DbSubnetGroup" in db:
+                        db_subnet_group = db["DbSubnetGroup"]
                     rds_instances.append(
                         {
                             "db_instance_id": db["DBInstanceIdentifier"],
@@ -195,7 +197,7 @@ def _print_network_interfaces(network_interfaces):
     for eni in network_interfaces:
         attachment_info = "Unattached"
         if eni["attachment"]:
-            instance_id = eni["attachment"].get("InstanceId", "Unknown")
+            instance_id = eni["attachment"].get("InstanceId") if eni["attachment"] else None
             attachment_info = f"Attached to {instance_id}"
         print(f"   • {eni['interface_id']} - {eni['status']} - {attachment_info}")
         print(f"     Description: {eni['description']}")

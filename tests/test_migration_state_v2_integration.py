@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from migration_state_managers import BucketScanStatus, BucketVerificationResult, FileMetadata
 from migration_state_v2 import MigrationStateV2, Phase
 from tests.assertions import assert_equal
 
@@ -14,10 +15,16 @@ def test_full_bucket_migration_workflow(tmp_path: Path):
     state.set_current_phase(Phase.SCANNING)
     assert state.get_current_phase() == Phase.SCANNING
 
-    state.add_file("bucket1", "key1", 100, "e1", "GLACIER", "2025-10-31T00:00:00Z")
-    state.add_file("bucket1", "key2", 200, "e2", "STANDARD", "2025-10-31T00:00:00Z")
+    state.add_file(
+        FileMetadata(bucket="bucket1", key="key1", size=100, etag="e1", storage_class="GLACIER", last_modified="2025-10-31T00:00:00Z")
+    )
+    state.add_file(
+        FileMetadata(bucket="bucket1", key="key2", size=200, etag="e2", storage_class="STANDARD", last_modified="2025-10-31T00:00:00Z")
+    )
 
-    state.save_bucket_status("bucket1", 2, 300, {"GLACIER": 1, "STANDARD": 1}, True)
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket1", file_count=2, total_size=300, storage_classes={"GLACIER": 1, "STANDARD": 1}, scan_complete=True)
+    )
 
     state.set_current_phase(Phase.GLACIER_RESTORE)
     glacier_files = state.get_glacier_files_needing_restore()
@@ -32,7 +39,16 @@ def test_full_bucket_migration_workflow(tmp_path: Path):
     state.mark_bucket_sync_complete("bucket1")
     state.set_current_phase(Phase.VERIFYING)
 
-    state.mark_bucket_verify_complete("bucket1", 2, 2, 1, 300, 2)
+    state.mark_bucket_verify_complete(
+        BucketVerificationResult(
+            bucket="bucket1",
+            verified_file_count=2,
+            size_verified_count=2,
+            checksum_verified_count=1,
+            total_bytes_verified=300,
+            local_file_count=2,
+        )
+    )
     state.set_current_phase(Phase.DELETING)
 
     state.mark_bucket_delete_complete("bucket1")
@@ -49,11 +65,11 @@ def test_multiple_buckets_independent_status(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.save_bucket_status("bucket1", 10, 100, {})
-    state.save_bucket_status("bucket2", 20, 200, {})
+    state.save_bucket_status(BucketScanStatus(bucket="bucket1", file_count=10, total_size=100, storage_classes={}))
+    state.save_bucket_status(BucketScanStatus(bucket="bucket2", file_count=20, total_size=200, storage_classes={}))
 
     state.mark_bucket_sync_complete("bucket1")
-    state.mark_bucket_verify_complete("bucket1")
+    state.mark_bucket_verify_complete(BucketVerificationResult(bucket="bucket1"))
 
     completed_sync = state.get_completed_buckets_for_phase("sync_complete")
     completed_verify = state.get_completed_buckets_for_phase("verify_complete")
@@ -69,14 +85,18 @@ def test_storage_classes_aggregation(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.add_file("b1", "k1", 100, "e1", "STANDARD", "2025-10-31T00:00:00Z")
-    state.add_file("b1", "k2", 200, "e2", "GLACIER", "2025-10-31T00:00:00Z")
-    state.add_file("b1", "k3", 300, "e3", "DEEP_ARCHIVE", "2025-10-31T00:00:00Z")
-    state.add_file("b2", "k4", 400, "e4", "GLACIER_IR", "2025-10-31T00:00:00Z")
-    state.add_file("b2", "k5", 100, "e5", "GLACIER", "2025-10-31T00:00:00Z")
+    state.add_file(FileMetadata(bucket="b1", key="k1", size=100, etag="e1", storage_class="STANDARD", last_modified="2025-10-31T00:00:00Z"))
+    state.add_file(FileMetadata(bucket="b1", key="k2", size=200, etag="e2", storage_class="GLACIER", last_modified="2025-10-31T00:00:00Z"))
+    state.add_file(
+        FileMetadata(bucket="b1", key="k3", size=300, etag="e3", storage_class="DEEP_ARCHIVE", last_modified="2025-10-31T00:00:00Z")
+    )
+    state.add_file(
+        FileMetadata(bucket="b2", key="k4", size=400, etag="e4", storage_class="GLACIER_IR", last_modified="2025-10-31T00:00:00Z")
+    )
+    state.add_file(FileMetadata(bucket="b2", key="k5", size=100, etag="e5", storage_class="GLACIER", last_modified="2025-10-31T00:00:00Z"))
 
-    state.save_bucket_status("b1", 3, 600, {}, True)
-    state.save_bucket_status("b2", 2, 500, {}, True)
+    state.save_bucket_status(BucketScanStatus(bucket="b1", file_count=3, total_size=600, storage_classes={}, scan_complete=True))
+    state.save_bucket_status(BucketScanStatus(bucket="b2", file_count=2, total_size=500, storage_classes={}, scan_complete=True))
 
     summary = state.get_scan_summary()
 
@@ -91,8 +111,12 @@ def test_glacier_restore_workflow(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.add_file("b1", "glacier1", 100, "e1", "GLACIER", "2025-10-31T00:00:00Z")
-    state.add_file("b1", "glacier2", 200, "e2", "DEEP_ARCHIVE", "2025-10-31T00:00:00Z")
+    state.add_file(
+        FileMetadata(bucket="b1", key="glacier1", size=100, etag="e1", storage_class="GLACIER", last_modified="2025-10-31T00:00:00Z")
+    )
+    state.add_file(
+        FileMetadata(bucket="b1", key="glacier2", size=200, etag="e2", storage_class="DEEP_ARCHIVE", last_modified="2025-10-31T00:00:00Z")
+    )
 
     needing_restore = state.get_glacier_files_needing_restore()
     assert_equal(len(needing_restore), 2)

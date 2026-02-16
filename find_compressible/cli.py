@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """CLI tool to locate and compress large locally downloaded objects."""
-# ruff: noqa: TRY003 - CLI emits user-focused errors with contextual messages
-# pylint: disable=line-too-long  # module docstrings and CLI messages prioritize clarity
 
 from __future__ import annotations
 

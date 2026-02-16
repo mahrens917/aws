@@ -60,6 +60,7 @@ def test_process_object_no_storage_class_defaults_to_standard():
         "Key": "test-key.txt",
         "Size": 2048,
         "LastModified": datetime(2024, 6, 1, tzinfo=timezone.utc),
+        "StorageClass": "STANDARD",
     }
 
     ninety_days_ago = datetime.now(timezone.utc) - timedelta(days=90)

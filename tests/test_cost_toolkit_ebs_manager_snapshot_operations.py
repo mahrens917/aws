@@ -136,7 +136,7 @@ def test_create_volume_snapshot_success_no_tags(mock_boto_client, mock_find_regi
 
         result = create_volume_snapshot("vol-notags")
 
-    assert_equal(result["volume_name"], "Unnamed")
+    assert result["volume_name"] is None
     assert_equal(result["snapshot_id"], "snap-notags")
     # Should not call create_tags when no volume tags exist
     mock_ec2.create_tags.assert_not_called()
@@ -176,7 +176,7 @@ def test_create_volume_snapshot_success_unnamed_volume(mock_boto_client, mock_fi
 
         result = create_volume_snapshot("vol-noname")
 
-    assert_equal(result["volume_name"], "Unnamed")
+    assert result["volume_name"] is None
     assert_equal(result["snapshot_id"], "snap-noname")
     # Should still call create_tags because volume has other tags
     mock_ec2.create_tags.assert_called_once()

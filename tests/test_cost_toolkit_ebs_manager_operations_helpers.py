@@ -71,8 +71,8 @@ def test_extract_basic_volume_info_without_iops_throughput():
 
     result = _extract_basic_volume_info(volume, "vol-456", "us-west-2")
 
-    assert_equal(result["iops"], "N/A")
-    assert_equal(result["throughput"], "N/A")
+    assert result["iops"] is None
+    assert result["throughput"] is None
 
 
 # Test _extract_attachment_info

@@ -35,8 +35,8 @@ def check_export_status(region, ami_id=None):
         for task in tasks:
             task_id = task["ExportImageTaskId"]
             status = task["Status"]
-            progress = task.get("Progress", "N/A")
-            message = task.get("StatusMessage", "")
+            progress = task.get("Progress")
+            message = task.get("StatusMessage")
             ami = task["ImageId"]
 
             status_emoji_map = {"active": "🔄", "completed": "✅", "failed": "❌", "deleted": "🗑️"}

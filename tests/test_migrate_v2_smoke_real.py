@@ -76,17 +76,9 @@ class _FakeS3:
         return {}
 
 
-class _FakeDriveChecker:
-    def __init__(self, path):
-        self.path = path
-        self.checked = False
-
-    def check_available(self):
-        """Mark as checked."""
-        self.checked = True
-
-    def __repr__(self):
-        return f"_FakeDriveChecker(path={self.path}, checked={self.checked})"
+def _fake_drive_checker(path):
+    """Fake drive checker that does nothing."""
+    Path(path).mkdir(parents=True, exist_ok=True)
 
 
 class _FakeMigrator:
@@ -126,7 +118,7 @@ def _make_deps(tmp_path, fake_s3, monkeypatch):
     monkeypatch.setattr(real, "Session", _FakeSession)
     deps = SmokeTestDeps(
         config=config,
-        drive_checker_cls=_FakeDriveChecker,
+        drive_checker_fn=_fake_drive_checker,
         create_migrator=lambda: migrator,
     )
     return deps, migrator
@@ -191,7 +183,7 @@ def test_context_restore_resets_state(tmp_path):
     ctx = real.RealSmokeContext(
         deps=SmokeTestDeps(
             config=config,
-            drive_checker_cls=_FakeDriveChecker,
+            drive_checker_fn=_fake_drive_checker,
             create_migrator=_FakeMigrator,
         ),
         temp_dir=temp_dir,
@@ -237,7 +229,7 @@ def test_context_restore_deletes_bucket_when_created(tmp_path):
     ctx = real.RealSmokeContext(
         deps=SmokeTestDeps(
             config=config,
-            drive_checker_cls=_FakeDriveChecker,
+            drive_checker_fn=_fake_drive_checker,
             create_migrator=_FakeMigrator,
         ),
         temp_dir=temp_dir,
@@ -311,7 +303,7 @@ def test_delete_bucket_and_contents_with_versions():
         delete_objects=fake_delete_objects,
         delete_bucket=lambda **_kwargs: {},
     )
-    real._delete_bucket_and_contents(fake_s3, "test-bucket")  # pylint: disable=protected-access
+    real._delete_bucket_and_contents(fake_s3, "test-bucket")
     assert len(deleted_objects) == 1
     assert deleted_objects[0]["Bucket"] == "test-bucket"
     objects = deleted_objects[0]["Delete"]["Objects"]
@@ -391,7 +383,7 @@ def test_create_bucket_helper():
         create_bucket=fake_create_bucket,
         get_waiter=fake_get_waiter,
     )
-    real._create_bucket(fake_s3, "my-bucket", "us-west-2")  # pylint: disable=protected-access
+    real._create_bucket(fake_s3, "my-bucket", "us-west-2")
     assert len(created_buckets) == 1
     assert waiter_calls[0]["Bucket"] == "my-bucket"
 

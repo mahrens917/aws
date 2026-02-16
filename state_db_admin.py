@@ -1,7 +1,5 @@
 """Shared helpers for managing the migrate_v2 SQLite state database."""
 
-# ruff: noqa: TRY003 - library emits contextual error messages
-
 from __future__ import annotations
 
 import os

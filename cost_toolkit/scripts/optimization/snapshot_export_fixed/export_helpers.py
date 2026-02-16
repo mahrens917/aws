@@ -71,7 +71,8 @@ def _handle_task_deletion_recovery(s3_client, bucket_name, s3_key, snapshot_size
         print(f"   📏 Final file size: {s3_result['size_gb']:.2f} GB")
     except (BotoCoreError, ClientError, constants.S3FileValidationException, Exception) as s3_error:
         print("   ❌ Cannot retrieve export results - task no longer exists")
-        raise ExportTaskDeletedException(f"Export task deleted and no valid S3 file found: {s3_error}") from s3_error  # noqa: TRY003
+        msg = f"Export task deleted and no valid S3 file found: {s3_error}"
+        raise ExportTaskDeletedException(msg) from s3_error
     return True, s3_key
 
 
@@ -89,7 +90,8 @@ def _check_terminal_state_fixed(task, status, elapsed_hours):
 
     if status == "failed":
         error_msg = task.get("StatusMessage") or "Unknown error"
-        raise ExportTaskFailedException(f"AWS export failed after {elapsed_hours:.1f} hours: {error_msg}")  # noqa: TRY003
+        msg = f"AWS export failed after {elapsed_hours:.1f} hours: {error_msg}"
+        raise ExportTaskFailedException(msg)
 
     if status == "deleted":
         return True, "deleted"
@@ -116,7 +118,8 @@ def _handle_api_errors(state: MonitoringState, exception: ClientError) -> None:
     print(f"   ❌ API error {state.consecutive_api_errors}/" f"{constants.MAX_CONSECUTIVE_API_ERRORS}: {exception}")
 
     if state.consecutive_api_errors >= constants.MAX_CONSECUTIVE_API_ERRORS:
-        raise ExportAPIException(f"Too many consecutive API errors ({state.consecutive_api_errors}) - failing fast")  # noqa: TRY003
+        msg = f"Too many consecutive API errors ({state.consecutive_api_errors}) - failing fast"
+        raise ExportAPIException(msg)
 
 
 def _fetch_and_reset_errors(ec2_client, export_task_id, state):
@@ -129,7 +132,7 @@ def _fetch_and_reset_errors(ec2_client, export_task_id, state):
 def _process_task_status(task, state, export_context):
     """Process and report task status, return tuple (should_continue, return_value or None)."""
     task_progress = task.get("Progress") or "N/A"
-    task_status_msg = task.get("StatusMessage", "")
+    task_status_msg = task.get("StatusMessage")
     _print_export_status(
         task["Status"],
         task_progress,
@@ -166,9 +169,8 @@ def monitor_export_with_recovery(ec2_client, s3_client, export_task_id, s3_key, 
         elapsed_hours = (current_time - state.start_time) / 3600
 
         if elapsed_hours >= constants.EXPORT_MAX_DURATION_HOURS:
-            raise ExportTaskStuckException(  # noqa: TRY003
-                f"Export exceeded maximum duration of " f"{constants.EXPORT_MAX_DURATION_HOURS} hours - aborting"
-            )
+            msg = f"Export exceeded maximum duration of {constants.EXPORT_MAX_DURATION_HOURS} hours - aborting"
+            raise ExportTaskStuckException(msg)
 
         try:
             task = _fetch_and_reset_errors(ec2_client, export_task_id, state)

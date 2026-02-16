@@ -1,30 +1,32 @@
-"""Comprehensive tests for migration_sync.py - Initialization."""
+"""Comprehensive tests for migration_sync.py - Function signature."""
 
+from threading import Event
 from unittest import mock
 
-from migration_sync import BucketSyncer
+from migration_sync import sync_bucket
 
 
-class TestBucketSyncerInit:
-    """Test BucketSyncer initialization"""
+class TestSyncBucketFunction:
+    """Test sync_bucket function interface"""
 
-    def test_init_creates_syncer_with_attributes(self, tmp_path):
-        """Test that BucketSyncer initializes with correct attributes"""
+    def test_sync_bucket_creates_local_directory(self, tmp_path):
+        """Test that sync_bucket creates the local bucket directory"""
         fake_s3 = mock.Mock()
+        fake_s3.get_paginator.return_value.paginate.return_value = [{"Contents": []}]
         fake_state = mock.Mock()
         base_path = tmp_path / "sync"
 
-        syncer = BucketSyncer(fake_s3, fake_state, base_path)
+        sync_bucket(fake_s3, fake_state, base_path, "my-bucket", Event())
 
-        assert syncer.s3 is fake_s3
-        assert syncer.state is fake_state
-        assert syncer.base_path == base_path
-        assert syncer.interrupted is False
+        assert (base_path / "my-bucket").exists()
 
-    def test_interrupted_flag_defaults_to_false(self, tmp_path):
-        """Test that interrupted flag is initialized to False"""
+    def test_sync_bucket_accepts_event_for_interrupt(self, tmp_path):
+        """Test that sync_bucket accepts a threading.Event for interruption"""
         fake_s3 = mock.Mock()
+        fake_s3.get_paginator.return_value.paginate.return_value = [{"Contents": []}]
         fake_state = mock.Mock()
-        syncer = BucketSyncer(fake_s3, fake_state, tmp_path)
+        interrupted = Event()
 
-        assert syncer.interrupted is False
+        # Should complete without error
+        sync_bucket(fake_s3, fake_state, tmp_path, "my-bucket", interrupted)
+        assert not interrupted.is_set()

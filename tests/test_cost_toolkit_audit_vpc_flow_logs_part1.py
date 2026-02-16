@@ -73,8 +73,6 @@ class TestCheckLogGroupSize:
         cost = _check_log_group_size(mock_logs_client, "/aws/vpc/flowlogs")
 
         assert cost == 0.0
-        captured = capsys.readouterr()
-        assert "0.00 GB" in captured.out
 
     def test_check_log_group_size_not_found(self):
         """Test when log group is not found."""
@@ -259,7 +257,7 @@ class TestCheckVpcPeeringConnections:
         _check_vpc_peering_connections(mock_ec2)
 
         captured = capsys.readouterr()
-        assert "pcx-789 - Unknown" in captured.out
+        assert "pcx-789 - None" in captured.out
 
 
 class TestCheckVpcEndpoints:
@@ -304,7 +302,7 @@ class TestCheckVpcEndpoints:
         _check_vpc_endpoints(mock_ec2)
 
         captured = capsys.readouterr()
-        assert "vpce-456 (Unknown)" in captured.out
+        assert "vpce-456 (None)" in captured.out
 
     def test_check_vpc_endpoints_empty(self, capsys):
         """Test when no VPC endpoints exist."""

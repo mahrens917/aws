@@ -20,22 +20,22 @@ def _print_network_info(instance):
     """Print network information for an instance."""
     print("\n📡 NETWORK INFORMATION:")
 
-    public_ip = instance.get("PublicIpAddress", None)
+    public_ip = instance.get("PublicIpAddress")
     print(f"  Public IP: {public_ip if public_ip else 'None'}")
 
-    public_dns = instance.get("PublicDnsName", None)
+    public_dns = instance.get("PublicDnsName")
     print(f"  Public DNS: {public_dns if public_dns else 'None'}")
 
-    private_ip = instance.get("PrivateIpAddress", None)
+    private_ip = instance.get("PrivateIpAddress")
     if private_ip:
         print(f"  Private IP: {private_ip}")
 
-    private_dns = instance.get("PrivateDnsName", None)
+    private_dns = instance.get("PrivateDnsName")
     if private_dns:
         print(f"  Private DNS: {private_dns}")
 
-    vpc_id = instance.get("VpcId", None)
-    subnet_id = instance.get("SubnetId", None)
+    vpc_id = instance.get("VpcId")
+    subnet_id = instance.get("SubnetId")
     print(f"  VPC ID: {vpc_id}")
     print(f"  Subnet ID: {subnet_id}")
 
@@ -54,10 +54,10 @@ def _check_internet_gateway(route_tables):
         if "Routes" in route_table:
             routes = route_table["Routes"]
         for route in routes:
-            dest_cidr = route.get("DestinationCidrBlock", None)
+            dest_cidr = route.get("DestinationCidrBlock")
             if dest_cidr == "0.0.0.0/0":
-                gateway_id = route.get("GatewayId", "")
-                if gateway_id.startswith("igw-"):
+                gateway_id = route.get("GatewayId")
+                if gateway_id and gateway_id.startswith("igw-"):
                     return True, gateway_id
     return False, None
 
@@ -66,7 +66,7 @@ def _check_subnet_configuration(ec2, subnet_id):
     """Check subnet configuration and internet routing."""
     subnet_response = ec2.describe_subnets(SubnetIds=[subnet_id])
     subnet = subnet_response["Subnets"][0]
-    map_public_ip = subnet.get("MapPublicIpOnLaunch", False)
+    map_public_ip = subnet.get("MapPublicIpOnLaunch")
     print("\n🌐 SUBNET CONFIGURATION:")
     print(f"  Subnet auto-assigns public IP: {map_public_ip}")
 
@@ -140,11 +140,11 @@ def get_instance_connection_info(instance_id, region_name):
         _print_instance_basic_info(instance)
         _print_network_info(instance)
 
-        subnet_id = instance.get("SubnetId", None)
+        subnet_id = instance.get("SubnetId")
         has_internet_route = _check_subnet_configuration(ec2, subnet_id)
 
-        public_ip = instance.get("PublicIpAddress", None)
-        public_dns = instance.get("PublicDnsName", None)
+        public_ip = instance.get("PublicIpAddress")
+        public_dns = instance.get("PublicDnsName")
         _print_connection_options(instance_id, region_name, public_ip, public_dns)
         _check_ssm_availability(instance_id, region_name)
 
@@ -160,8 +160,8 @@ def get_instance_connection_info(instance_id, region_name):
             "instance_id": instance_id,
             "public_ip": public_ip,
             "public_dns": public_dns,
-            "private_ip": instance.get("PrivateIpAddress", None),
-            "private_dns": instance.get("PrivateDnsName", None),
+            "private_ip": instance.get("PrivateIpAddress"),
+            "private_dns": instance.get("PrivateDnsName"),
             "has_internet_access": has_internet_route,
             "state": instance["State"]["Name"],
         }

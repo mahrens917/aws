@@ -1,11 +1,13 @@
-"""Unit tests for BucketScanner class from migration_scanner.py - Storage class handling"""
+"""Unit tests for scan functions from migration_scanner.py - Storage class handling"""
 
 from datetime import datetime
+from threading import Event
 
+from migration_scanner import scan_all_buckets, scan_bucket
 from tests.assertions import assert_equal
 
 
-def test_scan_all_buckets_respects_interrupt_signal(scanner, s3_mock, state_mock):
+def test_scan_all_buckets_respects_interrupt_signal(s3_mock, state_mock):
     """Test that scan_all_buckets stops on interrupt"""
     s3_mock.list_buckets.return_value = {
         "Buckets": [
@@ -15,19 +17,21 @@ def test_scan_all_buckets_respects_interrupt_signal(scanner, s3_mock, state_mock
     }
     s3_mock.get_paginator.return_value.paginate.return_value = []
 
+    interrupted = Event()
+
     # Interrupt after first bucket
     def interrupt_on_second_call(*_args, **_kwargs):
-        scanner.interrupted = True
+        interrupted.set()
 
     state_mock.save_bucket_status.side_effect = interrupt_on_second_call
 
-    scanner.scan_all_buckets()
+    scan_all_buckets(s3_mock, state_mock, interrupted)
 
     # Should only process first bucket
     assert state_mock.save_bucket_status.call_count == 1
 
 
-def test_scan_bucket_with_mixed_storage_classes(scanner, state_mock):
+def test_scan_bucket_with_mixed_storage_classes(s3_mock, state_mock):
     """Test scanning bucket with multiple storage classes"""
     files = [
         {
@@ -52,19 +56,19 @@ def test_scan_bucket_with_mixed_storage_classes(scanner, state_mock):
             "LastModified": datetime.now(),
         },
     ]
-    scanner.s3.get_paginator.return_value.paginate.return_value = [{"Contents": files}]
+    s3_mock.get_paginator.return_value.paginate.return_value = [{"Contents": files}]
 
-    scanner.scan_bucket("test-bucket")
+    scan_bucket(s3_mock, state_mock, "test-bucket", Event())
 
-    storage_classes = state_mock.save_bucket_status.call_args[0][3]
-    assert storage_classes["STANDARD"] == 1
-    assert storage_classes["GLACIER"] == 1
-    assert storage_classes["DEEP_ARCHIVE"] == 1
+    status = state_mock.save_bucket_status.call_args[0][0]
+    assert status.storage_classes["STANDARD"] == 1
+    assert status.storage_classes["GLACIER"] == 1
+    assert status.storage_classes["DEEP_ARCHIVE"] == 1
 
 
-def test_scan_bucket_handles_missing_storage_class(scanner, state_mock):
+def test_scan_bucket_handles_missing_storage_class(s3_mock, state_mock):
     """Test handling of objects without StorageClass field"""
-    scanner.s3.get_paginator.return_value.paginate.return_value = [
+    s3_mock.get_paginator.return_value.paginate.return_value = [
         {
             "Contents": [
                 {
@@ -78,16 +82,16 @@ def test_scan_bucket_handles_missing_storage_class(scanner, state_mock):
         }
     ]
 
-    scanner.scan_bucket("test-bucket")
+    scan_bucket(s3_mock, state_mock, "test-bucket", Event())
 
     # Should default to STANDARD
-    storage_classes = state_mock.save_bucket_status.call_args[0][3]
-    assert storage_classes["STANDARD"] == 1
+    status = state_mock.save_bucket_status.call_args[0][0]
+    assert status.storage_classes["STANDARD"] == 1
 
 
-def test_scan_bucket_accumulates_size(scanner, state_mock):
+def test_scan_bucket_accumulates_size(s3_mock, state_mock):
     """Test that file sizes are accumulated correctly"""
-    scanner.s3.get_paginator.return_value.paginate.return_value = [
+    s3_mock.get_paginator.return_value.paginate.return_value = [
         {
             "Contents": [
                 {
@@ -108,8 +112,8 @@ def test_scan_bucket_accumulates_size(scanner, state_mock):
         }
     ]
 
-    scanner.scan_bucket("test-bucket")
+    scan_bucket(s3_mock, state_mock, "test-bucket", Event())
 
     # Total size should be 3000
-    call_args = state_mock.save_bucket_status.call_args
-    assert_equal(call_args[0][2], 3000)
+    status = state_mock.save_bucket_status.call_args[0][0]
+    assert_equal(status.total_size, 3000)

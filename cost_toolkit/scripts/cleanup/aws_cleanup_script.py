@@ -17,17 +17,17 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from cost_toolkit.scripts import aws_utils  # pylint: disable=wrong-import-position
+from cost_toolkit.scripts import aws_utils
 
 
-def estimate_instance_cost(bundle_id):
+def estimate_instance_cost(bundle_id: str) -> float:
     """Canonical Lightsail instance pricing lookup (fails on unknown bundles)."""
-    return lightsail_utils.estimate_instance_cost(bundle_id)  # type: ignore[arg-type]
+    return lightsail_utils.estimate_instance_cost(bundle_id)
 
 
-def estimate_database_cost(bundle_id):
+def estimate_database_cost(bundle_id: str) -> float:
     """Canonical Lightsail database pricing lookup (fails on unknown bundles)."""
-    return lightsail_utils.estimate_database_cost(bundle_id)  # type: ignore[arg-type]
+    return lightsail_utils.estimate_database_cost(bundle_id)
 
 
 def disable_global_accelerators():

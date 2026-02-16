@@ -43,9 +43,9 @@ def audit_elastic_ips_in_region(region, aws_access_key_id, aws_secret_access_key
 
         for address in addresses:
             eip_data = {
-                "allocation_id": address.get("AllocationId", "N/A"),
-                "public_ip": address.get("PublicIp", "N/A"),
-                "domain": address.get("Domain", "N/A"),
+                "allocation_id": address.get("AllocationId"),
+                "public_ip": address.get("PublicIp"),
+                "domain": address.get("Domain"),
                 "instance_id": address.get("InstanceId"),
                 "association_id": address.get("AssociationId"),
                 "network_interface_id": address.get("NetworkInterfaceId"),

@@ -22,7 +22,7 @@ def _get_attachment_info(volume):
         attachments = volume["Attachments"]
     if not attachments:
         return "Not attached"
-    instance_id = attachments[0].get("InstanceId", "Unknown")
+    instance_id = attachments[0].get("InstanceId")
     return f"Instance: {instance_id}"
 
 
@@ -62,7 +62,7 @@ def _process_snapshot(snapshot, region):
     size_gb = snapshot["VolumeSize"]
     state = snapshot["State"]
     start_time = snapshot["StartTime"]
-    description = snapshot.get("Description", "No description")
+    description = snapshot.get("Description")
     monthly_cost = calculate_snapshot_cost(size_gb)
 
     print(f"  Snapshot ID: {snapshot_id}")

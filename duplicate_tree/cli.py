@@ -54,7 +54,6 @@ def _add_module_specific_args(parser: argparse.ArgumentParser) -> None:
 
 def parse_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     """Parse CLI arguments controlling database path, base path, and tolerance."""
-    # pylint: disable=no-member  # Attributes imported from config_local at runtime
     parser = create_migration_cli_parser(
         description=("Detect exact duplicate directory trees on the external drive " "using migrate_v2's SQLite metadata."),
         db_path_default=config_module.STATE_DB_PATH,

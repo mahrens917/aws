@@ -32,7 +32,6 @@ class TestUpdateLogGroupRetention:
         mock_client = MagicMock()
         log_group = {
             "logGroupName": "/aws/lambda/test",
-            "retentionInDays": "Never expire",
             "storedBytes": 1048576,
         }
         _update_log_group_retention(mock_client, log_group)
@@ -70,7 +69,6 @@ class TestUpdateLogGroupRetention:
         mock_client.put_retention_policy.side_effect = ClientError({"Error": {"Code": "ServiceError"}}, "put_retention_policy")
         log_group = {
             "logGroupName": "/aws/lambda/test",
-            "retentionInDays": "Never expire",
             "storedBytes": 1024,
         }
         _update_log_group_retention(mock_client, log_group)

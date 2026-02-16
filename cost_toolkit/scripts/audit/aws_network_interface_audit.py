@@ -18,25 +18,29 @@ def _build_interface_info(eni):
     """Build interface information dictionary from network interface data."""
     interface_id = eni["NetworkInterfaceId"]
     status = eni["Status"]
-    interface_type = eni.get("InterfaceType", "interface")
-    attachment = eni.get("Attachment", {})
+    interface_type = eni.get("InterfaceType")
+    attachment = {}
+    if "Attachment" in eni:
+        attachment = eni["Attachment"]
 
     tags = get_resource_tags(eni)
-    name = tags.get("Name", "No Name")
+    name = tags.get("Name")
 
-    association = eni.get("Association", {})
+    association = {}
+    if "Association" in eni:
+        association = eni["Association"]
     return {
         "interface_id": interface_id,
         "name": name,
         "status": status,
         "type": interface_type,
-        "vpc_id": eni.get("VpcId", "N/A"),
-        "subnet_id": eni.get("SubnetId", "N/A"),
-        "private_ip": eni.get("PrivateIpAddress", "N/A"),
-        "public_ip": association.get("PublicIp", "None"),
-        "attached_to": attachment.get("InstanceId", "Not attached"),
-        "attachment_status": attachment.get("Status", "detached"),
-        "description": eni.get("Description", "No description"),
+        "vpc_id": eni.get("VpcId"),
+        "subnet_id": eni.get("SubnetId"),
+        "private_ip": eni.get("PrivateIpAddress"),
+        "public_ip": association.get("PublicIp"),
+        "attached_to": attachment.get("InstanceId"),
+        "attachment_status": attachment.get("Status"),
+        "description": eni.get("Description"),
         "tags": tags,
     }
 
@@ -78,7 +82,9 @@ def audit_network_interfaces_in_region(region_name, aws_access_key_id, aws_secre
             region_data["interface_details"].append(interface_info)
 
             # Categorize interfaces
-            attachment = eni.get("Attachment", {})
+            attachment = {}
+            if "Attachment" in eni:
+                attachment = eni["Attachment"]
             category = _categorize_interface(eni["Status"], attachment)
             if category == "unused":
                 region_data["unused_interfaces"].append(interface_info)

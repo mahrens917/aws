@@ -27,6 +27,25 @@ ORPHANED_INTERFACES = [
 ]
 
 
+def _handle_deletion_error(error, interface_id, interface, deleted_interfaces, failed_deletions):
+    """Handle errors during network interface deletion."""
+    if not hasattr(error, "response"):
+        print(f"   ❌ Unexpected error deleting {interface_id}: {str(error)}")
+        failed_deletions.append({"interface": interface, "reason": str(error)})
+        return
+    error_code = error.response["Error"]["Code"]
+    if error_code == "InvalidNetworkInterfaceID.NotFound":
+        print(f"   ℹ️  Interface {interface_id} already deleted")
+        deleted_interfaces.append(interface)
+    elif error_code == "InvalidNetworkInterface.InUse":
+        print(f"   ⚠️  Interface {interface_id} is in use - cannot delete")
+        failed_deletions.append({"interface": interface, "reason": "In use"})
+    else:
+        message = error.response["Error"]["Message"]
+        print(f"   ❌ Failed to delete {interface_id}: {message}")
+        failed_deletions.append({"interface": interface, "reason": message})
+
+
 def delete_orphaned_rds_network_interfaces(aws_access_key_id, aws_secret_access_key):
     """Delete orphaned RDS network interfaces"""
 
@@ -56,8 +75,10 @@ def delete_orphaned_rds_network_interfaces(aws_access_key_id, aws_secret_access_
             eni = ec2.describe_network_interfaces(NetworkInterfaceIds=[interface_id])["NetworkInterfaces"][0]
 
             # Check if it has any attachments
-            attachment = eni.get("Attachment", {})
-            instance_id = attachment.get("InstanceId", None)
+            attachment = {}
+            if "Attachment" in eni:
+                attachment = eni["Attachment"]
+            instance_id = attachment.get("InstanceId")
             if attachment and instance_id:
                 print(f"   ⚠️  Interface is now attached to {instance_id} - skipping")
                 continue
@@ -68,23 +89,8 @@ def delete_orphaned_rds_network_interfaces(aws_access_key_id, aws_secret_access_
             print(f"   ✅ Successfully deleted {interface_id}")
             deleted_interfaces.append(interface)
 
-        except ec2.exceptions.ClientError as e:
-            error_code = e.response["Error"]["Code"]
-
-            if error_code == "InvalidNetworkInterfaceID.NotFound":
-                print(f"   ℹ️  Interface {interface_id} already deleted")
-                deleted_interfaces.append(interface)
-            elif error_code == "InvalidNetworkInterface.InUse":
-                print(f"   ⚠️  Interface {interface_id} is in use - cannot delete")
-                failed_deletions.append({"interface": interface, "reason": "In use"})
-            else:
-                message = e.response["Error"]["Message"]
-                print(f"   ❌ Failed to delete {interface_id}: {message}")
-                failed_deletions.append({"interface": interface, "reason": message})
-
-        except ClientError as e:
-            print(f"   ❌ Unexpected error deleting {interface_id}: {str(e)}")
-            failed_deletions.append({"interface": interface, "reason": str(e)})
+        except (ClientError, Exception) as e:
+            _handle_deletion_error(e, interface_id, interface, deleted_interfaces, failed_deletions)
 
         print()
 

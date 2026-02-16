@@ -1,42 +1,35 @@
 """Unit tests for migration_verify.py - Part 4: Edge Cases (Part 1)"""
 
 import hashlib
-from pathlib import Path
 from unittest import mock
 
 import pytest
 
-from migration_verify_bucket import BucketVerifier
-from migration_verify_checksums import FileChecksumVerifier
-from migration_verify_delete import BucketDeleter
-from migration_verify_inventory import FileInventoryChecker
+from migration_verify_bucket import verify_bucket
+from migration_verify_checksums import verify_files, verify_multipart_file
+from migration_verify_delete import delete_bucket
+from migration_verify_inventory import check_inventory, scan_local_files
 from tests.assertions import assert_equal
 
 
 def test_check_inventory_shows_many_missing_files():
     """Test inventory check shows summary when >10 missing files"""
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, Path("/tmp"))
-
     expected_keys = {f"file{i}.txt" for i in range(20)}
     local_keys = {"file0.txt", "file1.txt"}
 
     with pytest.raises(ValueError) as exc_info:
-        checker.check_inventory(expected_keys, local_keys)
+        check_inventory(expected_keys, local_keys)
 
     assert "18 missing" in str(exc_info.value)
 
 
 def test_check_inventory_shows_many_extra_files():
     """Test inventory check shows summary when >10 extra files"""
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, Path("/tmp"))
-
     expected_keys = {"file0.txt", "file1.txt"}
     local_keys = {f"file{i}.txt" for i in range(20)}
 
     with pytest.raises(ValueError) as exc_info:
-        checker.check_inventory(expected_keys, local_keys)
+        check_inventory(expected_keys, local_keys)
 
     assert "18 extra" in str(exc_info.value)
 
@@ -52,10 +45,8 @@ def test_verify_files_shows_many_verification_errors(tmp_path):
         files[f"file{i}.txt"] = file_path
         expected_map[f"file{i}.txt"] = {"size": 999, "etag": "abc123"}
 
-    verifier = FileChecksumVerifier()
-
     with pytest.raises(ValueError) as exc_info:
-        verifier.verify_files(
+        verify_files(
             local_files=files,
             expected_file_map=expected_map,
             expected_files=15,
@@ -73,10 +64,7 @@ def test_scan_local_files_with_no_progress_needed(tmp_path):
     for i in range(5):
         (bucket_path / f"file{i}.txt").write_text(f"content{i}")
 
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, tmp_path)
-
-    local_files = checker.scan_local_files("test-bucket", 5)
+    local_files = scan_local_files(tmp_path, "test-bucket", 5)
 
     assert_equal(len(local_files), 5)
 
@@ -90,17 +78,14 @@ def test_scan_files_with_equal_expected_files(tmp_path):
     for i in range(100):
         (bucket_path / f"file{i}.txt").write_text(f"content{i}")
 
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, tmp_path)
-
     # Tell it to expect exactly 100 files
-    local_files = checker.scan_local_files("test-bucket", 100)
+    local_files = scan_local_files(tmp_path, "test-bucket", 100)
 
     assert_equal(len(local_files), 100)
 
 
 def test_verify_files_count_mismatch_in_verify_bucket(tmp_path, mock_db_connection):
-    """Test that BucketVerifier detects verified count mismatch"""
+    """Test that verify_bucket detects verified count mismatch"""
     bucket_path = tmp_path / "test-bucket"
     bucket_path.mkdir()
     (bucket_path / "file1.txt").write_bytes(b"content1")
@@ -119,11 +104,9 @@ def test_verify_files_count_mismatch_in_verify_bucket(tmp_path, mock_db_connecti
     ]
     mock_state.db_conn.get_connection.return_value = mock_db_connection(mock_rows)
 
-    verifier = BucketVerifier(mock_state, tmp_path)
-
     # Should fail at inventory check because file2.txt is missing
     with pytest.raises(ValueError):
-        verifier.verify_bucket("test-bucket")
+        verify_bucket(mock_state, tmp_path, "test-bucket")
 
 
 def test_verify_multipart_file_verifies_checksum(tmp_path, empty_verify_stats):
@@ -134,8 +117,7 @@ def test_verify_multipart_file_verifies_checksum(tmp_path, empty_verify_stats):
     stats = empty_verify_stats.copy()
     stats["size_verified"] = 1
 
-    verifier = FileChecksumVerifier()
-    verifier.verify_multipart_file("file1.txt", file1, stats)
+    verify_multipart_file("file1.txt", file1, stats)
 
     assert_equal(stats["verified_count"], 1)
     assert_equal(stats["checksum_verified"], 1)
@@ -143,13 +125,14 @@ def test_verify_multipart_file_verifies_checksum(tmp_path, empty_verify_stats):
 
 def test_compute_etag_with_empty_file(tmp_path):
     """Test ETag computation for empty file"""
+    from migration_verify_checksums import compute_etag
+
     file1 = tmp_path / "empty.txt"
     file1.write_bytes(b"")
 
     md5_hash = hashlib.md5(b"", usedforsecurity=False).hexdigest()
 
-    verifier = FileChecksumVerifier()
-    computed, is_match = verifier.compute_etag(file1, md5_hash)
+    computed, is_match = compute_etag(file1, md5_hash)
 
     assert is_match is True
     assert computed == md5_hash
@@ -176,8 +159,7 @@ def test_verify_files_with_mixed_single_and_multipart(tmp_path):
         "multipart.txt": {"size": 9, "etag": "def456-2"},  # Multipart (has hyphen)
     }
 
-    verifier = FileChecksumVerifier()
-    results = verifier.verify_files(
+    results = verify_files(
         local_files=local_files,
         expected_file_map=expected_file_map,
         expected_files=2,
@@ -199,9 +181,9 @@ def test_delete_bucket_large_batch():
     mock_paginator = mock.Mock()
     mock_paginator.paginate.return_value = [large_batch]
     mock_s3.get_paginator.return_value = mock_paginator
+    mock_s3.delete_objects.return_value = {}
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Verify delete_objects was called with all objects
     call_args = mock_s3.delete_objects.call_args
@@ -219,11 +201,10 @@ def test_delete_bucket_updates_progress():
     pages = [{"Versions": [{"Key": f"file{i}.txt", "VersionId": f"v{i}"} for i in range(j * 1000, (j + 1) * 1000)]} for j in range(5)]
     mock_paginator.paginate.return_value = pages
     mock_s3.get_paginator.return_value = mock_paginator
-
-    deleter = BucketDeleter(mock_s3, mock_state)
+    mock_s3.delete_objects.return_value = {}
 
     # Should not raise an error
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Should have called delete_objects for each page
     assert_equal(mock_s3.delete_objects.call_count, 5)

@@ -4,7 +4,12 @@
 
 import pytest
 
-from migration_state_managers import BucketStateManager, FileStateManager
+from migration_state_managers import (
+    BucketScanStatus,
+    BucketStateManager,
+    FileMetadata,
+    FileStateManager,
+)
 
 BUCKET_A_FILE_COUNT = 100
 BUCKET_B_FILE_COUNT = 200
@@ -44,22 +49,28 @@ class TestGetAllBuckets:
     def test_get_all_buckets(self, bucket_mgr):
         """Test retrieving all buckets"""
         bucket_mgr.save_bucket_status(
-            bucket="bucket-a",
-            file_count=BUCKET_A_FILE_COUNT,
-            total_size=BUCKET_A_TOTAL_SIZE,
-            storage_classes={"STANDARD": BUCKET_A_FILE_COUNT},
+            BucketScanStatus(
+                bucket="bucket-a",
+                file_count=BUCKET_A_FILE_COUNT,
+                total_size=BUCKET_A_TOTAL_SIZE,
+                storage_classes={"STANDARD": BUCKET_A_FILE_COUNT},
+            )
         )
         bucket_mgr.save_bucket_status(
-            bucket="bucket-b",
-            file_count=BUCKET_B_FILE_COUNT,
-            total_size=BUCKET_B_TOTAL_SIZE,
-            storage_classes={"STANDARD": BUCKET_B_FILE_COUNT},
+            BucketScanStatus(
+                bucket="bucket-b",
+                file_count=BUCKET_B_FILE_COUNT,
+                total_size=BUCKET_B_TOTAL_SIZE,
+                storage_classes={"STANDARD": BUCKET_B_FILE_COUNT},
+            )
         )
         bucket_mgr.save_bucket_status(
-            bucket="bucket-c",
-            file_count=BUCKET_C_FILE_COUNT,
-            total_size=BUCKET_C_TOTAL_SIZE,
-            storage_classes={"STANDARD": BUCKET_C_FILE_COUNT},
+            BucketScanStatus(
+                bucket="bucket-c",
+                file_count=BUCKET_C_FILE_COUNT,
+                total_size=BUCKET_C_TOTAL_SIZE,
+                storage_classes={"STANDARD": BUCKET_C_FILE_COUNT},
+            )
         )
 
         buckets = bucket_mgr.get_all_buckets()
@@ -76,22 +87,28 @@ class TestGetAllBuckets:
 def test_get_completed_buckets_for_phase(bucket_mgr):
     """Test retrieving buckets completed for a specific phase"""
     bucket_mgr.save_bucket_status(
-        bucket="bucket-a",
-        file_count=BUCKET_A_FILE_COUNT,
-        total_size=BUCKET_A_TOTAL_SIZE,
-        storage_classes={"STANDARD": BUCKET_A_FILE_COUNT},
+        BucketScanStatus(
+            bucket="bucket-a",
+            file_count=BUCKET_A_FILE_COUNT,
+            total_size=BUCKET_A_TOTAL_SIZE,
+            storage_classes={"STANDARD": BUCKET_A_FILE_COUNT},
+        )
     )
     bucket_mgr.save_bucket_status(
-        bucket="bucket-b",
-        file_count=BUCKET_B_FILE_COUNT,
-        total_size=BUCKET_B_TOTAL_SIZE,
-        storage_classes={"STANDARD": BUCKET_B_FILE_COUNT},
+        BucketScanStatus(
+            bucket="bucket-b",
+            file_count=BUCKET_B_FILE_COUNT,
+            total_size=BUCKET_B_TOTAL_SIZE,
+            storage_classes={"STANDARD": BUCKET_B_FILE_COUNT},
+        )
     )
     bucket_mgr.save_bucket_status(
-        bucket="bucket-c",
-        file_count=BUCKET_C_FILE_COUNT,
-        total_size=BUCKET_C_TOTAL_SIZE,
-        storage_classes={"STANDARD": BUCKET_C_FILE_COUNT},
+        BucketScanStatus(
+            bucket="bucket-c",
+            file_count=BUCKET_C_FILE_COUNT,
+            total_size=BUCKET_C_TOTAL_SIZE,
+            storage_classes={"STANDARD": BUCKET_C_FILE_COUNT},
+        )
     )
 
     bucket_mgr.mark_bucket_sync_complete("bucket-a")
@@ -108,11 +125,13 @@ class TestGetBucketInfo:
     def test_get_bucket_info(self, bucket_mgr):
         """Test retrieving bucket information"""
         bucket_mgr.save_bucket_status(
-            bucket="test-bucket",
-            file_count=BUCKET_A_FILE_COUNT,
-            total_size=BUCKET_A_TOTAL_SIZE,
-            storage_classes=MIXED_STORAGE_COUNTS,
-            scan_complete=True,
+            BucketScanStatus(
+                bucket="test-bucket",
+                file_count=BUCKET_A_FILE_COUNT,
+                total_size=BUCKET_A_TOTAL_SIZE,
+                storage_classes=MIXED_STORAGE_COUNTS,
+                scan_complete=True,
+            )
         )
 
         info = bucket_mgr.get_bucket_info("test-bucket")
@@ -133,43 +152,53 @@ def test_get_scan_summary(bucket_mgr, db_conn):
     """Test getting scan summary"""
     file_manager = FileStateManager(db_conn)
     file_manager.add_file(
-        bucket="bucket-a",
-        key="file1.txt",
-        size=STANDARD_FILE_SIZE_BYTES,
-        etag="abc1",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="bucket-a",
+            key="file1.txt",
+            size=STANDARD_FILE_SIZE_BYTES,
+            etag="abc1",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
     file_manager.add_file(
-        bucket="bucket-a",
-        key="file2.txt",
-        size=GLACIER_FILE_SIZE_BYTES,
-        etag="abc2",
-        storage_class="GLACIER",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="bucket-a",
+            key="file2.txt",
+            size=GLACIER_FILE_SIZE_BYTES,
+            etag="abc2",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
     file_manager.add_file(
-        bucket="bucket-b",
-        key="file3.txt",
-        size=SECOND_BUCKET_FILE_SIZE_BYTES,
-        etag="def1",
-        storage_class="STANDARD",
-        last_modified="2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="bucket-b",
+            key="file3.txt",
+            size=SECOND_BUCKET_FILE_SIZE_BYTES,
+            etag="def1",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     bucket_mgr.save_bucket_status(
-        bucket="bucket-a",
-        file_count=SMALL_SCAN_FILE_COUNT,
-        total_size=SMALL_SCAN_TOTAL_SIZE,
-        storage_classes={"STANDARD": 1, "GLACIER": 1},
-        scan_complete=True,
+        BucketScanStatus(
+            bucket="bucket-a",
+            file_count=SMALL_SCAN_FILE_COUNT,
+            total_size=SMALL_SCAN_TOTAL_SIZE,
+            storage_classes={"STANDARD": 1, "GLACIER": 1},
+            scan_complete=True,
+        )
     )
     bucket_mgr.save_bucket_status(
-        bucket="bucket-b",
-        file_count=SINGLE_FILE_COUNT,
-        total_size=SINGLE_BUCKET_TOTAL_SIZE,
-        storage_classes={"STANDARD": 1},
-        scan_complete=True,
+        BucketScanStatus(
+            bucket="bucket-b",
+            file_count=SINGLE_FILE_COUNT,
+            total_size=SINGLE_BUCKET_TOTAL_SIZE,
+            storage_classes={"STANDARD": 1},
+            scan_complete=True,
+        )
     )
 
     summary = bucket_mgr.get_scan_summary()
@@ -184,19 +213,23 @@ def test_get_scan_summary(bucket_mgr, db_conn):
 def test_get_scan_summary_excludes_incomplete_scans(bucket_mgr):
     """Test that scan summary only includes complete scans"""
     bucket_mgr.save_bucket_status(
-        bucket="incomplete-bucket",
-        file_count=INCOMPLETE_BUCKET_COUNT,
-        total_size=INCOMPLETE_BUCKET_SIZE,
-        storage_classes={"STANDARD": INCOMPLETE_BUCKET_COUNT},
-        scan_complete=False,
+        BucketScanStatus(
+            bucket="incomplete-bucket",
+            file_count=INCOMPLETE_BUCKET_COUNT,
+            total_size=INCOMPLETE_BUCKET_SIZE,
+            storage_classes={"STANDARD": INCOMPLETE_BUCKET_COUNT},
+            scan_complete=False,
+        )
     )
 
     bucket_mgr.save_bucket_status(
-        bucket="complete-bucket",
-        file_count=COMPLETE_BUCKET_COUNT,
-        total_size=COMPLETE_BUCKET_SIZE,
-        storage_classes={"STANDARD": COMPLETE_BUCKET_COUNT},
-        scan_complete=True,
+        BucketScanStatus(
+            bucket="complete-bucket",
+            file_count=COMPLETE_BUCKET_COUNT,
+            total_size=COMPLETE_BUCKET_SIZE,
+            storage_classes={"STANDARD": COMPLETE_BUCKET_COUNT},
+            scan_complete=True,
+        )
     )
 
     summary = bucket_mgr.get_scan_summary()

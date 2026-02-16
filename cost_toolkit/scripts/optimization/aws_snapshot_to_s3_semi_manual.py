@@ -87,7 +87,7 @@ def _build_monitor_command(_region, _ami_id):
     return """# Monitor export progress:
 aws ec2 describe-export-image-tasks \\
     --region {region} \\
-    --query 'ExportImageTasks[?ImageId==`{ami_id}`].[ExportImageTaskId,Status,Progress,StatusMessage]' \\  # pylint: disable=line-too-long
+    --query 'ExportImageTasks[?ImageId==`{ami_id}`].[ExportImageTaskId,Status,Progress,StatusMessage]' \\
     --output table"""
 
 

@@ -13,10 +13,10 @@ from cost_toolkit.common.credential_utils import setup_aws_credentials
 def _print_basic_eni_info(eni):
     """Print basic ENI information."""
     status = eni["Status"]
-    interface_type = eni.get("InterfaceType", "interface")
-    description = eni.get("Description", "No description")
-    vpc_id = eni.get("VpcId", "N/A")
-    subnet_id = eni.get("SubnetId", "N/A")
+    interface_type = eni.get("InterfaceType")
+    description = eni.get("Description")
+    vpc_id = eni.get("VpcId")
+    subnet_id = eni.get("SubnetId")
 
     print(f"   Status: {status}")
     print(f"   Type: {interface_type}")
@@ -28,8 +28,8 @@ def _print_basic_eni_info(eni):
 def _check_instance_attachment(ec2, attachment):
     """Check if attached instance exists and is valid."""
     instance_id = attachment.get("InstanceId")
-    attachment_status = attachment.get("Status", "detached")
-    attach_time = attachment.get("AttachTime", "Unknown")
+    attachment_status = attachment.get("Status")
+    attach_time = attachment.get("AttachTime")
 
     print(f"   Attachment Status: {attachment_status}")
     print(f"   Attached Instance: {instance_id}")
@@ -42,7 +42,7 @@ def _check_instance_attachment(ec2, attachment):
         instance_response = ec2.describe_instances(InstanceIds=[instance_id])
         instance = instance_response["Reservations"][0]["Instances"][0]
         instance_state = instance["State"]["Name"]
-        instance_type = instance.get("InstanceType", "Unknown")
+        instance_type = instance.get("InstanceType")
 
         print(f"   ✅ Instance exists: {instance_id}")
         print(f"   Instance State: {instance_state}")
@@ -70,12 +70,12 @@ def _check_detached_eni(eni):
     """Check status of a detached ENI."""
     print("   ⚠️  No attachment information - likely detached")
 
-    interface_type = eni.get("InterfaceType", "interface")
+    interface_type = eni.get("InterfaceType")
     if interface_type != "interface":
         print(f"   ℹ️  Special interface type: {interface_type}")
         return "aws_service"
 
-    association = eni.get("Association", {})
+    association = eni.get("Association")
     if association:
         public_ip = association.get("PublicIp")
         allocation_id = association.get("AllocationId")
@@ -104,7 +104,7 @@ def investigate_network_interface(region_name, interface_id, aws_access_key_id, 
 
         _print_basic_eni_info(eni)
 
-        attachment = eni.get("Attachment", {})
+        attachment = eni.get("Attachment")
         if attachment:
             return _check_instance_attachment(ec2, attachment)
         return _check_detached_eni(eni)

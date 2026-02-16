@@ -11,7 +11,6 @@ import pytest
 
 from cleanup_temp_artifacts.categories import Category
 from cleanup_temp_artifacts.core_scanner import Candidate
-from migration_scanner import BucketScanner, GlacierRestorer, GlacierWaiter
 from migration_state_v2 import MigrationStateV2, Phase
 
 
@@ -211,27 +210,11 @@ def state_mock():
 
 
 @pytest.fixture
-def scanner(request):
-    """Create BucketScanner instance for migration scanner tests"""
-    s3_client = request.getfixturevalue("s3_mock")
-    state_manager = request.getfixturevalue("state_mock")
-    return BucketScanner(s3_client, state_manager)
+def interrupted():
+    """Create a threading.Event for interrupt signalling in scanner tests."""
+    from threading import Event
 
-
-@pytest.fixture
-def restorer(request):
-    """Create GlacierRestorer instance for migration scanner tests"""
-    s3_client = request.getfixturevalue("s3_mock")
-    state_manager = request.getfixturevalue("state_mock")
-    return GlacierRestorer(s3_client, state_manager)
-
-
-@pytest.fixture
-def waiter(request):
-    """Create GlacierWaiter instance for migration scanner tests"""
-    s3_client = request.getfixturevalue("s3_mock")
-    state_manager = request.getfixturevalue("state_mock")
-    return GlacierWaiter(s3_client, state_manager)
+    return Event()
 
 
 @pytest.fixture

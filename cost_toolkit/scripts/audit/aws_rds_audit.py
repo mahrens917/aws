@@ -9,19 +9,19 @@ from cost_toolkit.common.aws_client_factory import create_client
 def _process_rds_instance(instance):
     """Process and print a single RDS instance."""
     print(f"  Instance ID: {instance['DBInstanceIdentifier']}")
-    engine_version = instance.get("EngineVersion", "Unknown")
+    engine_version = instance.get("EngineVersion")
     print(f"  Engine: {instance['Engine']} {engine_version}")
     print(f"  Instance Class: {instance['DBInstanceClass']}")
     print(f"  Status: {instance['DBInstanceStatus']}")
-    allocated_storage = instance.get("AllocatedStorage", "Unknown")
+    allocated_storage = instance.get("AllocatedStorage")
     print(f"  Storage: {allocated_storage} GB")
-    storage_type = instance.get("StorageType", "Unknown")
+    storage_type = instance.get("StorageType")
     print(f"  Storage Type: {storage_type}")
-    multi_az = instance.get("MultiAZ", False)
+    multi_az = instance.get("MultiAZ")
     print(f"  Multi-AZ: {multi_az}")
-    publicly_accessible = instance.get("PubliclyAccessible", False)
+    publicly_accessible = instance.get("PubliclyAccessible")
     print(f"  Publicly Accessible: {publicly_accessible}")
-    creation_time = instance.get("InstanceCreateTime", "Unknown")
+    creation_time = instance.get("InstanceCreateTime")
     print(f"  Creation Time: {creation_time}")
 
     instance_class = instance["DBInstanceClass"]
@@ -40,18 +40,18 @@ def _process_rds_instance(instance):
 def _process_aurora_cluster(cluster):
     """Process and print a single Aurora cluster."""
     print(f"  Cluster ID: {cluster['DBClusterIdentifier']}")
-    engine_version = cluster.get("EngineVersion", "Unknown")
+    engine_version = cluster.get("EngineVersion")
     print(f"  Engine: {cluster['Engine']} {engine_version}")
     print(f"  Status: {cluster['Status']}")
-    database_name = cluster.get("DatabaseName", "None")
+    database_name = cluster.get("DatabaseName")
     print(f"  Database Name: {database_name}")
-    master_username = cluster.get("MasterUsername", "Unknown")
+    master_username = cluster.get("MasterUsername")
     print(f"  Master Username: {master_username}")
-    multi_az = cluster.get("MultiAZ", False)
+    multi_az = cluster.get("MultiAZ")
     print(f"  Multi-AZ: {multi_az}")
-    storage_encrypted = cluster.get("StorageEncrypted", False)
+    storage_encrypted = cluster.get("StorageEncrypted")
     print(f"  Storage Encrypted: {storage_encrypted}")
-    creation_time = cluster.get("ClusterCreateTime", "Unknown")
+    creation_time = cluster.get("ClusterCreateTime")
     print(f"  Creation Time: {creation_time}")
 
     members = cluster.get("DBClusterMembers")
@@ -66,14 +66,14 @@ def _process_aurora_cluster(cluster):
         print("  Engine Mode: Serverless")
         if "ScalingConfigurationInfo" in cluster:
             scaling = cluster["ScalingConfigurationInfo"]
-            min_cap = scaling.get("MinCapacity", "Unknown")
-            max_cap = scaling.get("MaxCapacity", "Unknown")
+            min_cap = scaling.get("MinCapacity")
+            max_cap = scaling.get("MaxCapacity")
             print(f"  Scaling: {min_cap}-{max_cap} ACU")
     elif "ServerlessV2ScalingConfiguration" in cluster:
         print("  Engine Mode: Serverless V2")
         scaling = cluster["ServerlessV2ScalingConfiguration"]
-        min_cap = scaling.get("MinCapacity", "Unknown")
-        max_cap = scaling.get("MaxCapacity", "Unknown")
+        min_cap = scaling.get("MinCapacity")
+        max_cap = scaling.get("MaxCapacity")
         print(f"  Scaling: {min_cap}-{max_cap} ACU")
 
     print()

@@ -33,11 +33,12 @@ def _process_single_compression(
         verify_compressed_file(compressed_path)
         compressed_size = compressed_path.stat().st_size
         candidate.path.unlink()
-        return True, compressed_size, None  # noqa: TRY300 - simpler than else after except
     except (RuntimeError, OSError) as exc:
         if compressed_path and compressed_path.exists():
             compressed_path.unlink(missing_ok=True)
         return False, 0, str(exc)
+    else:
+        return True, compressed_size, None
 
 
 def _format_candidate_line(prefix: str, candidate: CandidateFile) -> str:

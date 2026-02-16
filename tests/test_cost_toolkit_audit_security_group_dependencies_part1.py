@@ -59,7 +59,7 @@ class TestCollectNetworkInterfaceDeps:
         result = _collect_network_interface_deps(mock_client, "sg-456")
 
         assert len(result) == 1
-        assert result[0]["description"] == "N/A"
+        assert result[0]["description"] is None
 
     def test_collect_network_interfaces_empty(self):
         """Test collecting with no network interfaces."""
@@ -190,7 +190,7 @@ class TestCheckInboundRules:
         rules = _check_inbound_rules(sg, "sg-target")
 
         assert len(rules) == 1
-        assert rules[0]["port_range"] == "N/A-N/A"
+        assert rules[0]["port_range"] == "None-None"
 
     def test_check_inbound_rules_no_match(self):
         """Test checking inbound rules with no matching group."""

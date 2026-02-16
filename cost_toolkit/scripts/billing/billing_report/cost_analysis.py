@@ -112,7 +112,7 @@ def categorize_services(service_costs, resolved_services):
 
     for service, data in service_costs.items():
         service_key = service.upper()
-        status_message = resolved_services.get(service_key, "")
+        status_message = resolved_services.get(service_key)
         if status_message and "✅ RESOLVED" in status_message:
             resolved_services_list.append((service, data))
         elif status_message and "📝 NOTED" in status_message:

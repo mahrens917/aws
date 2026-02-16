@@ -5,16 +5,13 @@ from dataclasses import dataclass
 from importlib import import_module
 from typing import TYPE_CHECKING, Dict, List, Optional
 
+from migration_types import Phase
+
 _PACKAGE_PREFIX = f"{__package__}." if __package__ else ""
 get_utc_now = import_module(f"{_PACKAGE_PREFIX}migration_utils").get_utc_now
 
 if TYPE_CHECKING:
-    from .migration_state_v2 import DatabaseConnection, Phase
-
-try:
-    from .migration_state_v2 import Phase as _PhaseRuntime
-except ImportError:
-    from migration_state_v2 import Phase as _PhaseRuntime  # type: ignore[import-not-found]
+    from migration_state_v2 import DatabaseConnection
 
 
 @dataclass
@@ -40,9 +37,21 @@ class BucketVerificationResult:
     local_file_count: Optional[int] = None
 
 
+@dataclass
+class FileMetadata:
+    """Payload describing a discovered S3 object."""
+
+    bucket: str
+    key: str
+    size: int
+    etag: str
+    storage_class: str
+    last_modified: str
+
+
 def save_bucket_status_to_db(conn, status: BucketScanStatus):
     """Helper to save bucket status to database"""
-    import json  # pylint: disable=import-outside-toplevel
+    import json
 
     now = get_utc_now()
     storage_json = json.dumps(status.storage_classes)
@@ -142,15 +151,7 @@ class FileStateManager:
     def __init__(self, db_conn: "DatabaseConnection"):
         self.db_conn = db_conn
 
-    def add_file(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        bucket: str,
-        key: str,
-        size: int,
-        etag: str,
-        storage_class: str,
-        last_modified: str,
-    ):
+    def add_file(self, metadata: "FileMetadata"):
         """Add a discovered file to tracking database (idempotent)"""
         now = get_utc_now()
         with self.db_conn.get_connection() as conn:
@@ -162,7 +163,16 @@ class FileStateManager:
                      state, created_at, updated_at)
                     VALUES (?, ?, ?, ?, ?, ?, 'discovered', ?, ?)
                 """,
-                    (bucket, key, size, etag, storage_class, last_modified, now, now),
+                    (
+                        metadata.bucket,
+                        metadata.key,
+                        metadata.size,
+                        metadata.etag,
+                        metadata.storage_class,
+                        metadata.last_modified,
+                        now,
+                        now,
+                    ),
                 )
                 conn.commit()
             except sqlite3.IntegrityError as e:
@@ -218,22 +228,8 @@ class BucketStateManager:
     def __init__(self, db_conn: "DatabaseConnection"):
         self.db_conn = db_conn
 
-    def save_bucket_status(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        bucket: str,
-        file_count: int,
-        total_size: int,
-        storage_classes: Dict[str, int],
-        scan_complete: bool = False,
-    ):
+    def save_bucket_status(self, status: BucketScanStatus):
         """Save or update bucket status"""
-        status = BucketScanStatus(
-            bucket=bucket,
-            file_count=file_count,
-            total_size=total_size,
-            storage_classes=storage_classes,
-            scan_complete=scan_complete,
-        )
         with self.db_conn.get_connection() as conn:
             save_bucket_status_to_db(conn, status)
 
@@ -242,24 +238,8 @@ class BucketStateManager:
         with self.db_conn.get_connection() as conn:
             update_bucket_flag(conn, bucket, "sync_complete")
 
-    def mark_bucket_verify_complete(  # pylint: disable=too-many-arguments,too-many-positional-arguments
-        self,
-        bucket: str,
-        verified_file_count: int = None,
-        size_verified_count: int = None,
-        checksum_verified_count: int = None,
-        total_bytes_verified: int = None,
-        local_file_count: int = None,
-    ):
+    def mark_bucket_verify_complete(self, verification: BucketVerificationResult):
         """Mark bucket as verified and store verification results"""
-        verification = BucketVerificationResult(
-            bucket=bucket,
-            verified_file_count=verified_file_count,
-            size_verified_count=size_verified_count,
-            checksum_verified_count=checksum_verified_count,
-            total_bytes_verified=total_bytes_verified,
-            local_file_count=local_file_count,
-        )
         with self.db_conn.get_connection() as conn:
             update_bucket_verification(conn, verification)
 
@@ -301,7 +281,7 @@ class PhaseManager:
         with self.db_conn.get_connection() as conn:
             cursor = conn.execute("SELECT value FROM migration_metadata WHERE key = 'current_phase'")
             if not cursor.fetchone():
-                self.set_phase(_PhaseRuntime.SCANNING)
+                self.set_phase(Phase.SCANNING)
 
     def get_phase(self) -> "Phase":
         """Get current migration phase"""
@@ -310,7 +290,7 @@ class PhaseManager:
             row = cursor.fetchone()
             if not row:
                 raise RuntimeError("Migration phase metadata is missing. Reset the state DB to avoid resuming from an unknown phase.")
-            return _PhaseRuntime(row["value"])
+            return Phase(row["value"])
 
     def set_phase(self, phase: "Phase"):
         """Set current migration phase"""

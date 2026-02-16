@@ -1,7 +1,5 @@
 """Simulated smoke-test flow for migrate_v2."""
 
-# pylint: disable=duplicate-code,missing-function-docstring,too-few-public-methods,too-many-instance-attributes
-
 from __future__ import annotations
 
 import builtins
@@ -16,20 +14,12 @@ from typing import Any
 
 import boto3
 
-try:
-    from .migrate_v2_smoke_shared import (
-        SmokeTestDeps,
-        ensure_matching_manifests,
-        manifest_directory,
-        materialize_sample_tree,
-    )
-except ImportError:
-    from migrate_v2_smoke_shared import (  # type: ignore[no-redef]
-        SmokeTestDeps,
-        ensure_matching_manifests,
-        manifest_directory,
-        materialize_sample_tree,
-    )
+from migrate_v2_smoke_shared import (
+    SmokeTestDeps,
+    ensure_matching_manifests,
+    manifest_directory,
+    materialize_sample_tree,
+)
 
 
 def run_simulated_smoke_test(deps: SmokeTestDeps):
@@ -74,7 +64,7 @@ class _SimulatedS3Client:
             return _EmptyPaginator()
         raise NotImplementedError(f"Unsupported paginator: {operation_name}")
 
-    def get_object(self, *, Bucket: str, Key: str):  # pylint: disable=invalid-name
+    def get_object(self, *, Bucket: str, Key: str):
         if Bucket != self.bucket_name:
             raise RuntimeError(f"Unknown bucket {Bucket}")
         entry = self.object_entries.get(Key)
@@ -84,7 +74,7 @@ class _SimulatedS3Client:
         data = file_path.read_bytes()
         return {"Body": _InMemoryBody(data), "ContentLength": len(data), "ETag": entry["ETag"]}
 
-    def delete_objects(self, *, Bucket: str, Delete: dict):  # pylint: disable=invalid-name
+    def delete_objects(self, *, Bucket: str, Delete: dict):
         if Bucket != self.bucket_name:
             raise RuntimeError(f"Unknown bucket {Bucket}")
         objects_to_delete = []
@@ -98,14 +88,14 @@ class _SimulatedS3Client:
                 file_path.unlink()
         return {"Deleted": objects_to_delete}
 
-    def delete_bucket(self, *, Bucket: str):  # pylint: disable=invalid-name
+    def delete_bucket(self, *, Bucket: str):
         if Bucket != self.bucket_name:
             raise RuntimeError(f"Unknown bucket {Bucket}")
         if self.base_path.exists():
             shutil.rmtree(self.base_path, ignore_errors=True)
         self.object_entries.clear()
 
-    def abort_multipart_upload(self, *, Bucket: str, Key: str, UploadId: str):  # pylint: disable=invalid-name
+    def abort_multipart_upload(self, *, Bucket: str, Key: str, UploadId: str):
         if Bucket != self.bucket_name:
             raise RuntimeError(f"Unknown bucket {Bucket}")
         self.object_entries.pop(Key, None)
@@ -119,7 +109,7 @@ class _SimulatedListObjectsPaginator:
         self.bucket_name = bucket_name
         self.object_entries = object_entries
 
-    def paginate(self, Bucket: str):  # pylint: disable=invalid-name
+    def paginate(self, Bucket: str):
         if Bucket != self.bucket_name:
             return
         yield {"Contents": list(self.object_entries)}
@@ -128,7 +118,7 @@ class _SimulatedListObjectsPaginator:
 class _EmptyPaginator:
     """Paginator that yields a single empty page."""
 
-    def paginate(self, **_kwargs):  # pylint: disable=keyword-arg-before-vararg
+    def paginate(self, **_kwargs):
         yield {}
 
 
@@ -155,8 +145,7 @@ class _SimulatedSmokeContext:
         bucket_name = f"smoke-test-{uuid.uuid4().hex[:8]}"
         simulated_bucket_path = temp_dir / "simulated_s3" / bucket_name
         external_drive_root = Path(deps.config.LOCAL_BASE_PATH)
-        drive_checker = deps.drive_checker_cls(external_drive_root)
-        drive_checker.check_available()
+        deps.drive_checker_fn(external_drive_root)
         local_bucket_path = external_drive_root / bucket_name
         if local_bucket_path.exists():
             msg = "Smoke-test bucket path already exists on external drive: " f"{local_bucket_path}"

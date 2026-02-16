@@ -117,7 +117,7 @@ def test_process_snapshot_process_snapshot(capsys):
         "StartTime": datetime(2024, 1, 1, tzinfo=timezone.utc),
     }
     result2 = _process_snapshot(snapshot2, "us-east-1")
-    assert result2["description"] == "No description"
+    assert result2["description"] is None
 
 
 def test_audit_region_audit_region(capsys):

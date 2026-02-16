@@ -95,7 +95,7 @@ def disable_dlm_policies(region):
 
             for policy in policies:
                 policy_id = policy["PolicyId"]
-                description = policy.get("Description", "No description")
+                description = policy.get("Description")
                 state = policy["State"]
 
                 print(f"  Policy: {policy_id}")
@@ -143,9 +143,9 @@ def disable_eventbridge_backup_rules(region):
 
             for rule in backup_rules:
                 rule_name = rule["Name"]
-                description = rule.get("Description", "No description")
+                description = rule.get("Description")
                 state = rule["State"]
-                schedule = rule.get("ScheduleExpression", "Event-driven")
+                schedule = rule.get("ScheduleExpression")
 
                 print(f"  Rule: {rule_name}")
                 print(f"    Description: {description}")
@@ -174,7 +174,9 @@ def _check_vault_recovery_points(backup_client, vault_name):
     """Check and report recovery point status for a vault."""
     try:
         recovery_points = backup_client.list_recovery_points_by_backup_vault(BackupVaultName=vault_name, MaxResults=1)
-        recovery_points_list = recovery_points.get("RecoveryPoints", [])
+        recovery_points_list = []
+        if "RecoveryPoints" in recovery_points:
+            recovery_points_list = recovery_points["RecoveryPoints"]
         point_count = len(recovery_points_list)
         if point_count > 0:
             print("    ℹ️  Vault contains recovery points - keeping vault")
@@ -198,7 +200,9 @@ def check_backup_vault_policies(region):
     try:
         backup_client = create_client("backup", region=region)
         vaults_response = backup_client.list_backup_vaults()
-        vaults = vaults_response.get("BackupVaultList", [])
+        vaults = []
+        if "BackupVaultList" in vaults_response:
+            vaults = vaults_response["BackupVaultList"]
 
         if vaults:
             print(f"🏦 Found {len(vaults)} backup vault(s) in {region}")

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Optional, Sequence, TypedDict, cast
 
@@ -30,6 +31,17 @@ CREATE TABLE IF NOT EXISTS duplicate_tree_cache (
 """
 
 EXACT_TOLERANCE = 1.0
+
+
+@dataclass(frozen=True)
+class CacheLocation:
+    """Identifies the cache slot for a duplicate analysis snapshot."""
+
+    db_path: str
+    fingerprint: ScanFingerprint
+    base_path: str
+    min_files: int = MIN_REPORT_FILES
+    min_bytes: int = MIN_REPORT_BYTES
 
 
 class CachedReportBase(TypedDict):
@@ -61,30 +73,24 @@ def ensure_cache_table(conn: sqlite3.Connection):
     conn.commit()
 
 
-def load_cached_report(
-    db_path: str,
-    fingerprint: ScanFingerprint,
-    base_path: str,
-    min_files: int = MIN_REPORT_FILES,
-    min_bytes: int = MIN_REPORT_BYTES,
-) -> Optional[CachedReport]:
+def load_cached_report(location: CacheLocation) -> Optional[CachedReport]:
     """Return cached report metadata if it matches the current snapshot."""
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(location.db_path)
     conn.row_factory = sqlite3.Row
     try:
         ensure_cache_table(conn)
-        key = cache_key(fingerprint, min_files, min_bytes)
+        key = cache_key(location.fingerprint, location.min_files, location.min_bytes)
         row = conn.execute(
             """
             SELECT total_files, generated_at, report
             FROM duplicate_tree_cache
             WHERE fingerprint = ? AND tolerance = ? AND base_path = ?
             """,
-            (key, EXACT_TOLERANCE, base_path),
+            (key, EXACT_TOLERANCE, location.base_path),
         ).fetchone()
         if row is None:
             return None
-        if row["total_files"] != fingerprint.total_files:
+        if row["total_files"] != location.fingerprint.total_files:
             return None
         payload = row["report"]
         try:
@@ -106,19 +112,12 @@ def load_cached_report(
         conn.close()
 
 
-def store_cached_report(  # pylint: disable=too-many-positional-arguments  # cache key requires all params
-    db_path: str,
-    fingerprint: ScanFingerprint,
-    base_path: str,
-    clusters: Sequence[DuplicateCluster],
-    min_files: int = MIN_REPORT_FILES,
-    min_bytes: int = MIN_REPORT_BYTES,
-):
+def store_cached_report(location: CacheLocation, clusters: Sequence[DuplicateCluster]):
     """Persist the latest duplicate analysis snapshot."""
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(location.db_path)
     try:
         ensure_cache_table(conn)
-        key = cache_key(fingerprint, min_files, min_bytes)
+        key = cache_key(location.fingerprint, location.min_files, location.min_bytes)
         payload = json.dumps(clusters_to_rows(clusters))
         conn.execute(
             """
@@ -129,8 +128,8 @@ def store_cached_report(  # pylint: disable=too-many-positional-arguments  # cac
             (
                 key,
                 EXACT_TOLERANCE,
-                base_path,
-                fingerprint.total_files,
+                location.base_path,
+                location.fingerprint.total_files,
                 datetime.now(timezone.utc).isoformat(),
                 payload,
             ),

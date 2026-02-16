@@ -15,9 +15,13 @@ from ...aws_utils import (
 
 def _extract_instance_info(instance, region):
     """Extract instance information into a dictionary."""
-    vpc_security_groups = instance.get("VpcSecurityGroups", [])
+    vpc_security_groups = []
+    if "VpcSecurityGroups" in instance:
+        vpc_security_groups = instance["VpcSecurityGroups"]
     db_subnet_group = instance.get("DBSubnetGroup")
-    db_param_groups = instance.get("DBParameterGroups", [{}])
+    db_param_groups = []
+    if "DBParameterGroups" in instance:
+        db_param_groups = instance["DBParameterGroups"]
 
     return {
         "region": region,
@@ -35,7 +39,7 @@ def _extract_instance_info(instance, region):
         "parameter_group": (
             db_param_groups[0]["DBParameterGroupName"] if db_param_groups and "DBParameterGroupName" in db_param_groups[0] else None
         ),
-        "backup_retention": instance.get("BackupRetentionPeriod", 0),
+        "backup_retention": instance.get("BackupRetentionPeriod"),
         "preferred_backup_window": instance.get("PreferredBackupWindow"),
         "preferred_maintenance_window": instance.get("PreferredMaintenanceWindow"),
         "storage_encrypted": instance["StorageEncrypted"],
@@ -54,6 +58,22 @@ def _print_instance_info(instance_info):
     print(f"   Storage: {instance_info['allocated_storage']} GB " f"({instance_info['storage_type']})")
 
 
+def _discover_in_region(region):
+    """Discover standalone RDS instances in a single region."""
+    instances = []
+    rds_client = boto3.client("rds", region_name=region)
+    response = rds_client.describe_db_instances()
+    if "DBInstances" not in response:
+        return instances
+    for instance in response["DBInstances"]:
+        if instance.get("DBClusterIdentifier"):
+            continue
+        instance_info = _extract_instance_info(instance, region)
+        instances.append(instance_info)
+        _print_instance_info(instance_info)
+    return instances
+
+
 def discover_rds_instances():
     """Discover all RDS instances across regions"""
     setup_aws_credentials()
@@ -66,17 +86,7 @@ def discover_rds_instances():
 
     for region in regions:
         try:
-            rds_client = boto3.client("rds", region_name=region)
-            response = rds_client.describe_db_instances()
-
-            for instance in response.get("DBInstances", []):
-                if instance.get("DBClusterIdentifier"):
-                    continue
-
-                instance_info = _extract_instance_info(instance, region)
-                discovered_instances.append(instance_info)
-                _print_instance_info(instance_info)
-
+            discovered_instances.extend(_discover_in_region(region))
         except ClientError as e:
             if "not available" not in str(e).lower():
                 print(f"❌ Error accessing region {region}: {e}")
@@ -189,7 +199,7 @@ def _get_cluster_endpoint_info(rds_client, cluster_identifier):
     return {
         "cluster_identifier": cluster_identifier,
         "writer_endpoint": cluster["Endpoint"],
-        "reader_endpoint": cluster.get("ReaderEndpoint", None),
+        "reader_endpoint": cluster.get("ReaderEndpoint"),
         "port": cluster["Port"],
         "engine": cluster["Engine"],
         "status": cluster["Status"],

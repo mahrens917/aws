@@ -1,21 +1,20 @@
 """Integration tests for migration_orchestrator.py
 
 Tests cover:
-- Complete migration pipeline (sync → verify → delete)
+- Complete migration pipeline (sync -> verify -> delete)
 - Multi-bucket orchestration with errors
 - Resumable migration state preservation
 """
 
-# pylint: disable=redefined-outer-name  # pytest fixtures
-
+from threading import Event
 from unittest import mock
 
 import pytest
 
 from migration_orchestrator import (
-    BucketMigrationOrchestrator,
-    BucketMigrator,
     MigrationFatalError,
+    migrate_all_buckets,
+    process_bucket,
 )
 
 
@@ -37,21 +36,7 @@ def mock_deps(tmp_path):
 
 
 def test_full_bucket_migration_pipeline(mock_deps):
-    """Test complete migration pipeline: sync → verify → delete"""
-    with (
-        mock.patch("migration_orchestrator.BucketSyncer"),
-        mock.patch("migration_orchestrator.BucketVerifier"),
-        mock.patch("migration_orchestrator.BucketDeleter"),
-    ):
-        migrator = BucketMigrator(
-            mock_deps["s3"],
-            mock_deps["state"],
-            mock_deps["base_path"],
-        )
-        migrator.syncer = mock.Mock()
-        migrator.verifier = mock.Mock()
-        migrator.deleter = mock.Mock()
-
+    """Test complete migration pipeline: sync -> verify -> delete"""
     bucket = "test-bucket"
     bucket_info = {
         "sync_complete": False,
@@ -74,60 +59,63 @@ def test_full_bucket_migration_pipeline(mock_deps):
         "total_bytes_verified": 1000000,
         "local_file_count": 100,
     }
-    migrator.verifier.verify_bucket.return_value = verify_results
 
-    with mock.patch("builtins.input", return_value="yes"):
-        migrator.process_bucket(bucket)
+    with (
+        mock.patch("migration_orchestrator.sync_bucket") as mock_sync,
+        mock.patch("migration_orchestrator.verify_bucket", return_value=verify_results) as mock_verify,
+        mock.patch("migration_orchestrator.delete_bucket") as mock_delete,
+        mock.patch("builtins.input", return_value="yes"),
+    ):
+        process_bucket(mock_deps["s3"], mock_deps["state"], mock_deps["base_path"], bucket, Event())
 
     # Verify all steps completed in order
-    migrator.syncer.sync_bucket.assert_called_once()
-    migrator.verifier.verify_bucket.assert_called_once()
-    migrator.deleter.delete_bucket.assert_called_once()
+    mock_sync.assert_called_once()
+    mock_verify.assert_called_once()
+    mock_delete.assert_called_once()
 
 
 def test_multi_bucket_orchestration_with_one_error(mock_deps):
-    """Test orchestration continues despite error in one bucket"""
-    mock_bucket_migrator = mock.Mock()
-    orchestrator = BucketMigrationOrchestrator(
-        mock_deps["s3"],
-        mock_deps["state"],
-        mock_deps["base_path"],
-        mock_deps["drive_checker"],
-        mock_bucket_migrator,
-    )
-
+    """Test orchestration stops on error in one bucket"""
     all_buckets = ["bucket-1", "bucket-2"]
     mock_deps["state"].get_all_buckets.return_value = all_buckets
     mock_deps["state"].get_completed_buckets_for_phase.return_value = []
 
-    # First bucket fails, exit occurs
-    mock_bucket_migrator.process_bucket.side_effect = RuntimeError("Sync failed")
-
-    with mock.patch("builtins.print"):
+    with (
+        mock.patch("builtins.print"),
+        mock.patch("migration_orchestrator.process_bucket", side_effect=RuntimeError("Sync failed")),
+    ):
         with pytest.raises(MigrationFatalError) as exc_info:
-            orchestrator.migrate_all_buckets()
+            migrate_all_buckets(
+                mock_deps["s3"],
+                mock_deps["state"],
+                mock_deps["base_path"],
+                mock_deps["drive_checker"],
+                Event(),
+            )
 
     assert "Migration error" in str(exc_info.value)
 
 
 def test_resumable_migration_state_preserved(mock_deps):
     """Test that migration state is preserved for resumption"""
-    mock_bucket_migrator = mock.Mock()
-    orchestrator = BucketMigrationOrchestrator(
-        mock_deps["s3"],
-        mock_deps["state"],
-        mock_deps["base_path"],
-        mock_deps["drive_checker"],
-        mock_bucket_migrator,
-    )
-
     all_buckets = ["bucket-1", "bucket-2", "bucket-3"]
     completed_buckets = ["bucket-1", "bucket-2"]  # Two already done
     mock_deps["state"].get_all_buckets.return_value = all_buckets
     mock_deps["state"].get_completed_buckets_for_phase.return_value = completed_buckets
 
-    with mock.patch("builtins.print"):
-        orchestrator.migrate_all_buckets()
+    with (
+        mock.patch("builtins.print"),
+        mock.patch("migration_orchestrator.process_bucket") as mock_process,
+    ):
+        migrate_all_buckets(
+            mock_deps["s3"],
+            mock_deps["state"],
+            mock_deps["base_path"],
+            mock_deps["drive_checker"],
+            Event(),
+        )
 
     # Only bucket-3 should be processed
-    mock_bucket_migrator.process_bucket.assert_called_once_with("bucket-3")
+    mock_process.assert_called_once()
+    call_args = mock_process.call_args
+    assert call_args[0][3] == "bucket-3"

@@ -42,10 +42,10 @@ class TestPrintBasicEniInfo:
 
         captured = capsys.readouterr()
         assert "Status: available" in captured.out
-        assert "Type: interface" in captured.out
-        assert "Description: No description" in captured.out
-        assert "VPC: N/A" in captured.out
-        assert "Subnet: N/A" in captured.out
+        assert "Type: None" in captured.out
+        assert "Description: None" in captured.out
+        assert "VPC: None" in captured.out
+        assert "Subnet: None" in captured.out
 
     def test_print_basic_info_special_interface_type(self, capsys):
         """Test printing ENI info with special interface type."""
@@ -183,7 +183,7 @@ class TestCheckInstanceAttachmentEdgeCases:
 
         assert result == "active"
         captured = capsys.readouterr()
-        assert "Attachment Status: detached" in captured.out
+        assert "Attachment Status: None" in captured.out
 
     def test_check_attachment_missing_attach_time(self, capsys):
         """Test attachment check with missing attach time."""
@@ -210,4 +210,4 @@ class TestCheckInstanceAttachmentEdgeCases:
 
         assert result == "active"
         captured = capsys.readouterr()
-        assert "Attach Time: Unknown" in captured.out
+        assert "Attach Time: None" in captured.out

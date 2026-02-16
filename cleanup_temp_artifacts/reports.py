@@ -34,7 +34,10 @@ def summarise(candidates: list[Candidate]) -> list[tuple[str, int, int]]:
     summary: dict[str, tuple[int, int]] = {}
     for candidate in candidates:
         cat_name = candidate.category.name
-        count, total_size = summary.get(cat_name, (0, 0))
+        if cat_name in summary:
+            count, total_size = summary[cat_name]
+        else:
+            count, total_size = 0, 0
         summary[candidate.category.name] = (count + 1, total_size + (candidate.size_bytes or 0))
     return sorted((name, cnt, size) for name, (cnt, size) in summary.items())
 

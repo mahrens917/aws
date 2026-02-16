@@ -98,8 +98,8 @@ def test_check_current_hosted_zones_missing_config(mock_boto_client, capsys):  #
     result = check_current_hosted_zones()
 
     assert_equal(len(result), 1)
-    assert_equal(result[0]["is_private"], False)
-    assert_equal(result[0]["record_count"], 0)
+    assert result[0]["is_private"] is None
+    assert result[0]["record_count"] is None
 
 
 @patch("cost_toolkit.scripts.audit.aws_route53_domain_ownership.boto3.client")

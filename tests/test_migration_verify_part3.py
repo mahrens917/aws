@@ -1,11 +1,11 @@
-"""Unit tests for migration_verify.py - Part 3: BucketVerifier and BucketDeleter"""
+"""Unit tests for migration_verify.py - Part 3: verify_bucket and delete_bucket functions"""
 
 from unittest import mock
 
 import pytest
 
-from migration_verify_bucket import BucketVerifier
-from migration_verify_delete import BucketDeleter
+from migration_verify_bucket import verify_bucket
+from migration_verify_delete import delete_bucket
 from tests.assertions import assert_equal
 
 
@@ -13,8 +13,7 @@ def test_verify_bucket_integration_succeeds(setup_verify_test):
     """Test complete bucket verification workflow"""
     test_env = setup_verify_test({"file1.txt": b"content1"})
 
-    verifier = BucketVerifier(test_env["mock_state"], test_env["tmp_path"])
-    results = verifier.verify_bucket("test-bucket")
+    results = verify_bucket(test_env["mock_state"], test_env["tmp_path"], "test-bucket")
 
     assert_equal(results["verified_count"], 1)
     assert_equal(results["local_file_count"], 1)
@@ -29,10 +28,8 @@ def test_verify_bucket_fails_when_local_path_missing(tmp_path):
         "total_size": 100,
     }
 
-    verifier = BucketVerifier(mock_state, tmp_path)
-
     with pytest.raises(FileNotFoundError):
-        verifier.verify_bucket("nonexistent-bucket")
+        verify_bucket(mock_state, tmp_path, "nonexistent-bucket")
 
 
 def test_verify_bucket_fails_on_missing_files(tmp_path, mock_db_connection):
@@ -53,10 +50,8 @@ def test_verify_bucket_fails_on_missing_files(tmp_path, mock_db_connection):
     ]
     mock_state.db_conn.get_connection.return_value = mock_db_connection(mock_rows)
 
-    verifier = BucketVerifier(mock_state, tmp_path)
-
     with pytest.raises(ValueError) as exc_info:
-        verifier.verify_bucket("test-bucket")
+        verify_bucket(mock_state, tmp_path, "test-bucket")
 
     assert "File inventory check failed" in str(exc_info.value)
 
@@ -79,10 +74,8 @@ def test_verify_bucket_fails_on_checksum_mismatch(tmp_path, mock_db_connection):
     ]
     mock_state.db_conn.get_connection.return_value = mock_db_connection(mock_rows)
 
-    verifier = BucketVerifier(mock_state, tmp_path)
-
     with pytest.raises(ValueError) as exc_info:
-        verifier.verify_bucket("test-bucket")
+        verify_bucket(mock_state, tmp_path, "test-bucket")
 
     assert "Verification failed" in str(exc_info.value)
 
@@ -105,9 +98,9 @@ def test_delete_bucket_single_page():
         }
     ]
     mock_s3.get_paginator.return_value = mock_paginator
+    mock_s3.delete_objects.return_value = {}
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Verify delete_objects was called
     mock_s3.delete_objects.assert_called_once()
@@ -147,9 +140,9 @@ def test_delete_bucket_multiple_pages():
         },
     ]
     mock_s3.get_paginator.return_value = mock_paginator
+    mock_s3.delete_objects.return_value = {}
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Verify delete_objects was called 3 times (once per page)
     assert_equal(mock_s3.delete_objects.call_count, 3)
@@ -169,9 +162,9 @@ def test_delete_bucket_handles_empty_pages():
         {"Versions": [{"Key": "file2.txt", "VersionId": "v2"}]},
     ]
     mock_s3.get_paginator.return_value = mock_paginator
+    mock_s3.delete_objects.return_value = {}
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Should only call delete_objects twice (skipping empty page)
     assert_equal(mock_s3.delete_objects.call_count, 2)
@@ -186,9 +179,9 @@ def test_delete_bucket_calls_delete_bucket_method():
     mock_paginator = mock.Mock()
     mock_paginator.paginate.return_value = [{"Versions": [{"Key": "file1.txt", "VersionId": "v1"}]}]
     mock_s3.get_paginator.return_value = mock_paginator
+    mock_s3.delete_objects.return_value = {}
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Verify delete_bucket was called
     mock_s3.delete_bucket.assert_called_once_with(Bucket="test-bucket")
@@ -210,9 +203,9 @@ def test_delete_bucket_formats_object_keys_correctly():
         }
     ]
     mock_s3.get_paginator.return_value = mock_paginator
+    mock_s3.delete_objects.return_value = {}
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Verify keys and version IDs are in correct format
     call_args = mock_s3.delete_objects.call_args
@@ -224,10 +217,10 @@ def test_delete_bucket_formats_object_keys_correctly():
 
 
 class TestBucketDeleterMultipartCleanup:
-    """Tests for BucketDeleter multipart upload and final cleanup handling"""
+    """Tests for delete_bucket multipart upload and final cleanup handling"""
 
     def test_delete_bucket_aborts_multipart_uploads_before_final_delete(self):
-        """BucketDeleter should abort uploads prior to deleting the bucket"""
+        """delete_bucket should abort uploads prior to deleting the bucket"""
         mock_s3 = mock.Mock()
         mock_state = mock.Mock()
         mock_state.get_bucket_info.return_value = {"file_count": 0}
@@ -247,14 +240,13 @@ class TestBucketDeleterMultipartCleanup:
             final_check_paginator,
         ]
 
-        deleter = BucketDeleter(mock_s3, mock_state)
-        deleter.delete_bucket("test-bucket")
+        delete_bucket(mock_s3, mock_state, "test-bucket")
 
         mock_s3.abort_multipart_upload.assert_called_once_with(Bucket="test-bucket", Key="file1.txt", UploadId="upload-1")
         mock_s3.delete_bucket.assert_called_once_with(Bucket="test-bucket")
 
     def test_delete_bucket_raises_when_objects_remain(self):
-        """BucketDeleter should raise if objects remain after deletion pass"""
+        """delete_bucket should raise if objects remain after deletion pass"""
         mock_s3 = mock.Mock()
         mock_state = mock.Mock()
         mock_state.get_bucket_info.return_value = {"file_count": 1}
@@ -274,10 +266,8 @@ class TestBucketDeleterMultipartCleanup:
             leftover_paginator,
         ]
 
-        deleter = BucketDeleter(mock_s3, mock_state)
-
         with pytest.raises(RuntimeError) as exc_info:
-            deleter.delete_bucket("test-bucket")
+            delete_bucket(mock_s3, mock_state, "test-bucket")
 
         assert "Bucket still contains objects" in str(exc_info.value)
         mock_s3.delete_bucket.assert_not_called()

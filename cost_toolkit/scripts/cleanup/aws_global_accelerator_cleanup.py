@@ -25,10 +25,14 @@ def list_accelerators():
     try:
         client = _get_ga_client()  # Global Accelerator is only in us-west-2
         response = client.list_accelerators()
-        return response.get("Accelerators", [])
+        accelerators = []
+        if "Accelerators" in response:
+            accelerators = response["Accelerators"]
     except ClientError as e:
         print(f"❌ Error listing accelerators: {str(e)}")
         return []
+    else:
+        return accelerators
 
 
 def disable_accelerator(accelerator_arn):
@@ -137,9 +141,9 @@ def delete_accelerator(accelerator_arn):
 def process_single_accelerator(accelerator):
     """Process deletion of a single Global Accelerator"""
     accelerator_arn = accelerator["AcceleratorArn"]
-    accelerator_name = accelerator.get("Name", "Unnamed")
-    accelerator_status = accelerator.get("Status", "Unknown")
-    accelerator_enabled = accelerator.get("Enabled", False)
+    accelerator_name = accelerator.get("Name")
+    accelerator_status = accelerator.get("Status")
+    accelerator_enabled = accelerator.get("Enabled")
 
     print(f"\n📋 Processing Accelerator: {accelerator_name}")
     print(f"  ARN: {accelerator_arn}")

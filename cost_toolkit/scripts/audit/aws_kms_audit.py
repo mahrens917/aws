@@ -10,7 +10,7 @@ from cost_toolkit.common.aws_common import get_all_aws_regions
 
 def _print_key_info(key_info):
     """Print details for a single KMS key"""
-    description = key_info.get("Description", "No description")
+    description = key_info.get("Description")
     print(f"  Description: {description}")
     print(f"  Key Manager: {key_info['KeyManager']}")
     print(f"  Key State: {key_info['KeyState']}")
@@ -48,7 +48,7 @@ def _print_key_grants(kms, key_id):
         if grants["Grants"]:
             print(f"  Active Grants: {len(grants['Grants'])}")
             for grant in grants["Grants"][:3]:  # Show first 3 grants
-                grantee = grant.get("GranteePrincipal", "Unknown")
+                grantee = grant.get("GranteePrincipal")
                 operations = []
                 if "Operations" in grant:
                     operations = grant["Operations"]

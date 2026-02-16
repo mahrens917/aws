@@ -44,7 +44,7 @@ def get_snapshot_details(snapshot_id, region):
         raise KeyError(f"Snapshot {snapshot_id} missing required fields: {', '.join(missing_fields)}")
 
     return {
-        "snapshot_id": snapshot.get("SnapshotId", snapshot_id),
+        "snapshot_id": snapshot.get("SnapshotId"),
         "region": region,
         "size_gb": snapshot["VolumeSize"],
         "state": snapshot["State"],

@@ -49,9 +49,12 @@ def _process_stuck_export(task, s3_client):
 
     print("      ⚠️  Classic 80% stuck scenario detected!")
 
-    s3_location = task.get("S3ExportLocation", {})
-    bucket_name = s3_location.get("S3Bucket", "")
-    s3_prefix = s3_location.get("S3Prefix", "")
+    s3_location = task.get("S3ExportLocation")
+    if not s3_location:
+        print("      ❌ No S3 bucket information found in export task")
+        return None
+    bucket_name = s3_location.get("S3Bucket")
+    s3_prefix = s3_location.get("S3Prefix")
 
     if not bucket_name:
         print("      ❌ No S3 bucket information found in export task")
@@ -111,7 +114,7 @@ def check_active_exports(region, aws_access_key_id, aws_secret_access_key):
         export_task_id = task["ExportImageTaskId"]
         ami_id = task.get("ImageId") or "unknown"
         progress = task.get("Progress") or "N/A"
-        status_msg = task.get("StatusMessage", "")
+        status_msg = task.get("StatusMessage")
 
         print(f"\n   🔍 Checking export {export_task_id}:")
         print(f"      AMI: {ami_id}")

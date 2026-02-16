@@ -29,9 +29,9 @@ def _print_zone_records(_route53, zone_id):
 
         print("  Records:")
         for record in records:
-            record_name = record.get("Name", "")
-            record_type = record.get("Type", "")
-            ttl = record.get("TTL", "N/A")
+            record_name = record.get("Name")
+            record_type = record.get("Type")
+            ttl = record.get("TTL")
 
             if record_type in ["NS", "SOA"]:
                 continue
@@ -42,12 +42,12 @@ def _print_zone_records(_route53, zone_id):
             if "ResourceRecords" in record:
                 resource_records = record["ResourceRecords"]
             for rr in resource_records:
-                rr_value = rr.get("Value", "")
+                rr_value = rr.get("Value")
                 print(f"      -> {rr_value}")
 
             alias_target = record.get("AliasTarget")
             if alias_target:
-                dns_name = alias_target.get("DNSName", "")
+                dns_name = alias_target.get("DNSName")
                 print(f"      -> ALIAS: {dns_name}")
 
     except ClientError as e:
@@ -133,8 +133,10 @@ def audit_route53_health_checks():
 
         for hc in health_checks:
             hc_id = hc["Id"]
-            hc_config = hc.get("HealthCheckConfig", {})
-            hc_type = hc_config.get("Type", "Unknown")
+            hc_config = {}
+            if "HealthCheckConfig" in hc:
+                hc_config = hc["HealthCheckConfig"]
+            hc_type = hc_config.get("Type")
 
             # Health checks cost $0.50/month each
             monthly_cost = 0.50
@@ -145,9 +147,9 @@ def audit_route53_health_checks():
             print(f"  Monthly Cost: ${monthly_cost:.2f}")
 
             if hc_type in {"HTTP", "HTTPS"}:
-                fqdn = hc_config.get("FullyQualifiedDomainName", "")
-                port = hc_config.get("Port", "")
-                path = hc_config.get("ResourcePath", "")
+                fqdn = hc_config.get("FullyQualifiedDomainName")
+                port = hc_config.get("Port")
+                path = hc_config.get("ResourcePath")
                 print(f"  Target: {hc_type.lower()}://{fqdn}:{port}{path}")
 
             health_check_details.append({"id": hc_id, "type": hc_type, "monthly_cost": monthly_cost})
@@ -187,9 +189,9 @@ def audit_route53_resolver_endpoints():
 
         for endpoint in endpoints:
             endpoint_id = endpoint["Id"]
-            endpoint_name = endpoint.get("Name", "Unnamed")
-            direction = endpoint.get("Direction", "Unknown")
-            status = endpoint.get("Status", "Unknown")
+            endpoint_name = endpoint.get("Name")
+            direction = endpoint.get("Direction")
+            status = endpoint.get("Status")
 
             # Resolver endpoints cost ~$0.125/hour = ~$90/month
             monthly_cost = 90.0

@@ -86,11 +86,19 @@ class TestRunPhaseSkipping:
         """Test that scanner is skipped when starting in middle phase."""
         mock_state = mock_dependencies["state"]
         mock_state.get_current_phase.side_effect = [Phase.GLACIER_RESTORE, Phase.COMPLETE]
+        called = []
 
-        migrator.run()
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("migrate_v2.scan_all_buckets", lambda s3, state, interrupted: called.append("scan"))
+            mp.setattr("migrate_v2.request_all_restores", lambda s3, state, interrupted: called.append("restore"))
+            mp.setattr("migrate_v2.wait_for_restores", lambda s3, state, interrupted: called.append("wait"))
+            mp.setattr("migrate_v2.migrate_all_buckets", lambda s3, state, base_path, drive_checker, interrupted: called.append("migrate"))
+            mp.setattr("migrate_v2.check_drive_available", lambda base_path: None)
+            mp.setattr("shutil.which", lambda cmd: "/usr/bin/aws")
+            migrator.run()
 
-        mock_dependencies["scanner"].scan_all_buckets.assert_not_called()
-        mock_dependencies["glacier_restorer"].request_all_restores.assert_called_once()
+        assert "scan" not in called
+        assert "restore" in called
 
 
 class TestRunPhaseTransitions:
@@ -109,13 +117,21 @@ class TestRunPhaseTransitions:
             Phase.SYNCING,
             Phase.COMPLETE,
         ]
+        called = []
 
-        migrator.run()
+        with pytest.MonkeyPatch.context() as mp:
+            mp.setattr("migrate_v2.scan_all_buckets", lambda s3, state, interrupted: called.append("scan"))
+            mp.setattr("migrate_v2.request_all_restores", lambda s3, state, interrupted: called.append("restore"))
+            mp.setattr("migrate_v2.wait_for_restores", lambda s3, state, interrupted: called.append("wait"))
+            mp.setattr("migrate_v2.migrate_all_buckets", lambda s3, state, base_path, drive_checker, interrupted: called.append("migrate"))
+            mp.setattr("migrate_v2.check_drive_available", lambda base_path: None)
+            mp.setattr("shutil.which", lambda cmd: "/usr/bin/aws")
+            migrator.run()
 
-        assert mock_dependencies["scanner"].scan_all_buckets.called
-        assert mock_dependencies["glacier_restorer"].request_all_restores.called
-        assert mock_dependencies["glacier_waiter"].wait_for_restores.called
-        assert mock_dependencies["migration_orchestrator"].migrate_all_buckets.called
+        assert "scan" in called
+        assert "restore" in called
+        assert "wait" in called
+        assert "migrate" in called
 
 
 class TestS3MigrationV2ErrorHandling:
@@ -126,7 +142,10 @@ class TestS3MigrationV2ErrorHandling:
 
     def test_run_with_drive_check_failure(self, migrator, mock_dependencies):
         """Test that SystemExit from drive check is propagated."""
-        mock_dependencies["drive_checker"].check_available.side_effect = SystemExit(1)
-
-        with pytest.raises(SystemExit):
+        with (
+            pytest.raises(SystemExit),
+            pytest.MonkeyPatch.context() as mp,
+        ):
+            mp.setattr("migrate_v2.check_drive_available", mock.Mock(side_effect=SystemExit(1)))
+            mp.setattr("shutil.which", lambda cmd: "/usr/bin/aws")
             migrator.run()

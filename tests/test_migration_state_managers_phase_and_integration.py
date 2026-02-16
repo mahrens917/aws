@@ -4,7 +4,12 @@
 
 import pytest
 
-from migration_state_managers import PhaseManager
+from migration_state_managers import (
+    BucketScanStatus,
+    BucketVerificationResult,
+    FileMetadata,
+    PhaseManager,
+)
 from migration_state_v2 import MigrationStateV2, Phase
 from tests.assertions import assert_equal
 
@@ -93,23 +98,31 @@ def migration_state(temp_db):
 def test_full_migration_workflow(migration_state):
     """Test a complete migration workflow"""
     migration_state.add_file(
-        "test-bucket",
-        "file1.txt",
-        1000,
-        "abc1",
-        "STANDARD",
-        "2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="file1.txt",
+            size=1000,
+            etag="abc1",
+            storage_class="STANDARD",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
     migration_state.add_file(
-        "test-bucket",
-        "file2.txt",
-        2000,
-        "abc2",
-        "GLACIER",
-        "2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="file2.txt",
+            size=2000,
+            etag="abc2",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
-    migration_state.save_bucket_status("test-bucket", 2, 3000, {"STANDARD": 1, "GLACIER": 1}, scan_complete=True)
+    migration_state.save_bucket_status(
+        BucketScanStatus(
+            bucket="test-bucket", file_count=2, total_size=3000, storage_classes={"STANDARD": 1, "GLACIER": 1}, scan_complete=True
+        )
+    )
 
     assert migration_state.get_current_phase() == Phase.SCANNING
 
@@ -121,12 +134,14 @@ def test_full_migration_workflow(migration_state):
 def test_glacier_restore_workflow(migration_state):
     """Test complete glacier restore workflow"""
     migration_state.add_file(
-        "test-bucket",
-        "file2.txt",
-        2000,
-        "abc2",
-        "GLACIER",
-        "2024-01-01T00:00:00Z",
+        FileMetadata(
+            bucket="test-bucket",
+            key="file2.txt",
+            size=2000,
+            etag="abc2",
+            storage_class="GLACIER",
+            last_modified="2024-01-01T00:00:00Z",
+        )
     )
 
     migration_state.mark_glacier_restore_requested("test-bucket", "file2.txt")
@@ -143,7 +158,11 @@ def test_glacier_restore_workflow(migration_state):
 
 def test_phase_progression(migration_state):
     """Test progressing through migration phases"""
-    migration_state.save_bucket_status("test-bucket", 2, 3000, {"STANDARD": 1, "GLACIER": 1}, scan_complete=True)
+    migration_state.save_bucket_status(
+        BucketScanStatus(
+            bucket="test-bucket", file_count=2, total_size=3000, storage_classes={"STANDARD": 1, "GLACIER": 1}, scan_complete=True
+        )
+    )
 
     migration_state.set_current_phase(Phase.GLACIER_WAIT)
     assert migration_state.get_current_phase() == Phase.GLACIER_WAIT
@@ -154,12 +173,14 @@ def test_phase_progression(migration_state):
 
     migration_state.set_current_phase(Phase.VERIFYING)
     migration_state.mark_bucket_verify_complete(
-        "test-bucket",
-        verified_file_count=2,
-        size_verified_count=2,
-        checksum_verified_count=2,
-        total_bytes_verified=3000,
-        local_file_count=2,
+        BucketVerificationResult(
+            bucket="test-bucket",
+            verified_file_count=2,
+            size_verified_count=2,
+            checksum_verified_count=2,
+            total_bytes_verified=3000,
+            local_file_count=2,
+        )
     )
 
     migration_state.set_current_phase(Phase.DELETING)
@@ -172,12 +193,24 @@ def test_phase_progression(migration_state):
 
 def test_multiple_buckets_independentstates(migration_state):
     """Test that multiple buckets maintain independent states"""
-    migration_state.add_file("bucket-a", "file1.txt", 1000, "abc1", "STANDARD", "2024-01-01T00:00:00Z")
+    migration_state.add_file(
+        FileMetadata(
+            bucket="bucket-a", key="file1.txt", size=1000, etag="abc1", storage_class="STANDARD", last_modified="2024-01-01T00:00:00Z"
+        )
+    )
 
-    migration_state.add_file("bucket-b", "file2.txt", 2000, "def1", "STANDARD", "2024-01-01T00:00:00Z")
+    migration_state.add_file(
+        FileMetadata(
+            bucket="bucket-b", key="file2.txt", size=2000, etag="def1", storage_class="STANDARD", last_modified="2024-01-01T00:00:00Z"
+        )
+    )
 
-    migration_state.save_bucket_status("bucket-a", 1, 1000, {"STANDARD": 1}, scan_complete=True)
-    migration_state.save_bucket_status("bucket-b", 1, 2000, {"STANDARD": 1}, scan_complete=True)
+    migration_state.save_bucket_status(
+        BucketScanStatus(bucket="bucket-a", file_count=1, total_size=1000, storage_classes={"STANDARD": 1}, scan_complete=True)
+    )
+    migration_state.save_bucket_status(
+        BucketScanStatus(bucket="bucket-b", file_count=1, total_size=2000, storage_classes={"STANDARD": 1}, scan_complete=True)
+    )
 
     migration_state.mark_bucket_sync_complete("bucket-a")
 
@@ -188,12 +221,30 @@ def test_multiple_buckets_independentstates(migration_state):
 
 def test_get_scan_summary_integration(migration_state):
     """Test getting scan summary through integrated managers"""
-    migration_state.add_file("bucket-a", "file1.txt", 1000, "abc1", "STANDARD", "2024-01-01T00:00:00Z")
-    migration_state.add_file("bucket-a", "file2.txt", 2000, "abc2", "GLACIER", "2024-01-01T00:00:00Z")
-    migration_state.add_file("bucket-b", "file3.txt", 3000, "def1", "STANDARD", "2024-01-01T00:00:00Z")
+    migration_state.add_file(
+        FileMetadata(
+            bucket="bucket-a", key="file1.txt", size=1000, etag="abc1", storage_class="STANDARD", last_modified="2024-01-01T00:00:00Z"
+        )
+    )
+    migration_state.add_file(
+        FileMetadata(
+            bucket="bucket-a", key="file2.txt", size=2000, etag="abc2", storage_class="GLACIER", last_modified="2024-01-01T00:00:00Z"
+        )
+    )
+    migration_state.add_file(
+        FileMetadata(
+            bucket="bucket-b", key="file3.txt", size=3000, etag="def1", storage_class="STANDARD", last_modified="2024-01-01T00:00:00Z"
+        )
+    )
 
-    migration_state.save_bucket_status("bucket-a", 2, 3000, {"STANDARD": 1, "GLACIER": 1}, True)
-    migration_state.save_bucket_status("bucket-b", 1, 3000, {"STANDARD": 1}, True)
+    migration_state.save_bucket_status(
+        BucketScanStatus(
+            bucket="bucket-a", file_count=2, total_size=3000, storage_classes={"STANDARD": 1, "GLACIER": 1}, scan_complete=True
+        )
+    )
+    migration_state.save_bucket_status(
+        BucketScanStatus(bucket="bucket-b", file_count=1, total_size=3000, storage_classes={"STANDARD": 1}, scan_complete=True)
+    )
 
     summary = migration_state.get_scan_summary()
 

@@ -29,7 +29,7 @@ def _delete_instance(lightsail_client, instance):
     """Delete a single Lightsail instance."""
     instance_name = instance["name"]
     instance_state = instance["state"]["name"]
-    bundle_id = instance.get("bundleId", None)
+    bundle_id = instance.get("bundleId")
 
     print(f"\n📦 Found instance: {instance_name}")
     print(f"   State: {instance_state}")
@@ -58,7 +58,7 @@ def _delete_database(lightsail_client, database):
     """Delete a single Lightsail database."""
     db_name = database["name"]
     db_state = database["state"]
-    db_bundle = database.get("relationalDatabaseBundleId", None)
+    db_bundle = database.get("relationalDatabaseBundleId")
 
     print(f"\n🗄️  Found database: {db_name}")
     print(f"   State: {db_state}")

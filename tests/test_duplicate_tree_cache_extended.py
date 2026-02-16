@@ -13,6 +13,7 @@ from duplicate_tree.analysis import (
 )
 from duplicate_tree.cache import (
     EXACT_TOLERANCE,
+    CacheLocation,
     ensure_cache_table,
     load_cached_report,
     store_cached_report,
@@ -40,7 +41,7 @@ def test_load_cached_report_no_match(tmp_path):
     db_path = tmp_path / "cache.db"
     fingerprint = ScanFingerprint(total_files=10, checksum="nonexistent")
 
-    result = load_cached_report(str(db_path), fingerprint, "/base/path")
+    result = load_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/base/path"))
     assert result is None
 
 
@@ -64,7 +65,7 @@ def test_load_cached_report_file_count_mismatch(tmp_path):
     conn.commit()
     conn.close()
 
-    result = load_cached_report(str(db_path), fingerprint, "/base/path")
+    result = load_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/base/path"))
     assert result is None
 
 
@@ -88,7 +89,7 @@ def test_load_cached_report_invalid_json(tmp_path):
     conn.commit()
     conn.close()
 
-    result = load_cached_report(str(db_path), fingerprint, "/base/path")
+    result = load_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/base/path"))
     assert result is not None
     assert "report" in result
     assert result["report"] == "INVALID JSON"
@@ -115,7 +116,7 @@ def test_load_cached_report_valid_payload(tmp_path):
     conn.commit()
     conn.close()
 
-    result = load_cached_report(str(db_path), fingerprint, "/base/path")
+    result = load_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/base/path"))
 
     assert result is not None
     assert result["rows"] == [{"total_files": 2, "total_size": 10, "nodes": []}]
@@ -131,7 +132,7 @@ def test_store_cached_report_with_clusters(tmp_path):
     node2 = DirectoryNode(path=("bucket", "dir2"), total_files=5, total_size=1000)
     cluster = DuplicateCluster(signature="sig1", nodes=[node1, node2])
 
-    store_cached_report(str(db_path), fingerprint, "/base/path", [cluster])
+    store_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/base/path"), [cluster])
 
     conn = sqlite3.connect(str(db_path))
     conn.row_factory = sqlite3.Row
@@ -151,8 +152,8 @@ def test_store_cached_report_replaces_existing(tmp_path):
     db_path = tmp_path / "cache.db"
     fingerprint = ScanFingerprint(total_files=10, checksum="abc123")
 
-    store_cached_report(str(db_path), fingerprint, "/base/path", [])
-    store_cached_report(str(db_path), fingerprint, "/base/path", [])
+    store_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/base/path"), [])
+    store_cached_report(CacheLocation(db_path=str(db_path), fingerprint=fingerprint, base_path="/base/path"), [])
 
     conn = sqlite3.connect(str(db_path))
     count = conn.execute("SELECT COUNT(*) FROM duplicate_tree_cache").fetchone()[0]

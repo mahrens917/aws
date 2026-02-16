@@ -17,7 +17,9 @@ def _check_log_group_size(logs_client, log_group_name):
             log_groups = log_group_response["logGroups"]
         for log_group in log_groups:
             if log_group["logGroupName"] == log_group_name:
-                stored_bytes = log_group.get("storedBytes", 0)
+                stored_bytes = log_group.get("storedBytes")
+                if stored_bytes is None:
+                    return 0
                 stored_gb = stored_bytes / (1024**3)
                 monthly_storage_cost = stored_gb * 0.50
                 print(f"  Log Group Size: {stored_gb:.2f} GB")
@@ -30,8 +32,12 @@ def _check_log_group_size(logs_client, log_group_name):
 
 def _build_flow_info(flow_log, region_name):
     """Extract flow log information from API response."""
-    resource_ids = flow_log.get("ResourceIds", [])
-    tags = flow_log.get("Tags", [])
+    resource_ids = []
+    if "ResourceIds" in flow_log:
+        resource_ids = flow_log["ResourceIds"]
+    tags = []
+    if "Tags" in flow_log:
+        tags = flow_log["Tags"]
     return {
         "region": region_name,
         "flow_log_id": flow_log.get("FlowLogId"),
@@ -83,7 +89,9 @@ def audit_flow_logs_in_region(region_name):
         logs_client = create_client("logs", region=region_name)
 
         response = ec2.describe_flow_logs()
-        flow_logs = response.get("FlowLogs", [])
+        flow_logs = []
+        if "FlowLogs" in response:
+            flow_logs = response["FlowLogs"]
 
         if not flow_logs:
             print(f"✅ No VPC Flow Logs found in {region_name}")
@@ -113,8 +121,10 @@ def _check_vpc_peering_connections(ec2):
         peering_connections = response["VpcPeeringConnections"]
     print(f"VPC Peering Connections: {len(peering_connections)}")
     for peering in peering_connections:
-        status_obj = peering.get("Status", {})
-        status = status_obj.get("Code", "Unknown")
+        status_obj = {}
+        if "Status" in peering:
+            status_obj = peering["Status"]
+        status = status_obj.get("Code")
         print(f"  Peering: {peering['VpcPeeringConnectionId']} - {status}")
 
 
@@ -126,13 +136,13 @@ def _check_vpc_endpoints(ec2):
         endpoints = response["VpcEndpoints"]
     print(f"VPC Endpoints: {len(endpoints)}")
     for endpoint in endpoints:
-        endpoint_type = endpoint.get("VpcEndpointType", "Unknown")
+        endpoint_type = endpoint.get("VpcEndpointType")
         print(f"  Endpoint: {endpoint['VpcEndpointId']} ({endpoint_type})")
-        service_name = endpoint.get("ServiceName", "Unknown")
+        service_name = endpoint.get("ServiceName")
         print(f"    Service: {service_name}")
-        state = endpoint.get("State", "Unknown")
+        state = endpoint.get("State")
         print(f"    State: {state}")
-        created = endpoint.get("CreationTimestamp", "N/A")
+        created = endpoint.get("CreationTimestamp")
         print(f"    Created: {created}")
 
 

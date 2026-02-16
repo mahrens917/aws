@@ -5,20 +5,22 @@ from unittest import mock
 
 import pytest
 
-from migration_verify_bucket import BucketVerifier
-from migration_verify_checksums import VerificationProgressTracker
-from migration_verify_delete import BucketDeleter, _bucket_has_contents, _ensure_list
-from migration_verify_inventory import FileInventoryChecker
+from migration_utils import ProgressTracker
+from migration_verify_bucket import verify_bucket
+from migration_verify_checksums import update_verification_progress
+from migration_verify_delete import _bucket_has_contents, _ensure_list, delete_bucket
+from migration_verify_inventory import scan_local_files
 from tests.assertions import assert_equal
 
 
 def test_update_progress_with_large_file_counts(capsys):
     """Test progress update with large file counts"""
-    tracker = VerificationProgressTracker()
+    progress = ProgressTracker(update_interval=2.0)
     start_time = time.time() - 10
 
     # Test with 1 million files
-    tracker.update_progress(
+    update_verification_progress(
+        progress=progress,
         start_time=start_time,
         verified_count=500000,
         total_bytes_verified=1024 * 1024 * 1024,  # 1 GB
@@ -33,11 +35,12 @@ def test_update_progress_with_large_file_counts(capsys):
 
 def test_verify_files_all_file_count_milestone_updates(capsys):
     """Test progress updates at every 100-file milestone"""
-    tracker = VerificationProgressTracker()
+    progress = ProgressTracker(update_interval=2.0)
     current_time = time.time()
 
     # Verify that exactly 100 files triggers an update
-    tracker.update_progress(
+    update_verification_progress(
+        progress=progress,
         start_time=current_time,
         verified_count=100,
         total_bytes_verified=1024,
@@ -60,8 +63,7 @@ def test_delete_bucket_with_zero_objects():
     mock_paginator.paginate.return_value = []
     mock_s3.get_paginator.return_value = mock_paginator
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("empty-bucket")
+    delete_bucket(mock_s3, mock_state, "empty-bucket")
 
     # Should still call delete_bucket to remove the empty bucket
     mock_s3.delete_bucket.assert_called_once_with(Bucket="empty-bucket")
@@ -78,10 +80,7 @@ def test_scan_large_number_of_files_with_progress_output(tmp_path):
         subdir.mkdir(exist_ok=True)
         (subdir / f"file{i}.txt").write_text(f"content{i}")
 
-    mock_state = mock.Mock()
-    checker = FileInventoryChecker(mock_state, tmp_path)
-
-    local_files = checker.scan_local_files("test-bucket", 10100)
+    local_files = scan_local_files(tmp_path, "test-bucket", 10100)
 
     assert_equal(len(local_files), 10100)
 
@@ -103,8 +102,7 @@ def test_delete_bucket_with_pagination_triggers_progress():
     # Mock delete_objects to return a response without errors
     mock_s3.delete_objects.return_value = {"Deleted": []}
 
-    deleter = BucketDeleter(mock_s3, mock_state)
-    deleter.delete_bucket("test-bucket")
+    delete_bucket(mock_s3, mock_state, "test-bucket")
 
     # Should be called 3 times (one per page)
     assert_equal(mock_s3.delete_objects.call_count, 3)
@@ -114,8 +112,7 @@ def test_full_verification_workflow(setup_verify_test):
     """Test complete verification workflow from inventory to checksums"""
     test_env = setup_verify_test({"file1.txt": b"content", "file2.txt": b"data"})
 
-    verifier = BucketVerifier(test_env["mock_state"], test_env["tmp_path"])
-    results = verifier.verify_bucket("test-bucket")
+    results = verify_bucket(test_env["mock_state"], test_env["tmp_path"], "test-bucket")
 
     assert_equal(results["verified_count"], 2)
     assert_equal(results["checksum_verified"], 2)
@@ -139,10 +136,8 @@ def test_error_handling_across_components(tmp_path, mock_db_connection):
     ]
     mock_state.db_conn.get_connection.return_value = mock_db_connection(mock_rows)
 
-    verifier = BucketVerifier(mock_state, tmp_path)
-
     with pytest.raises(ValueError):
-        verifier.verify_bucket("test-bucket")
+        verify_bucket(mock_state, tmp_path, "test-bucket")
 
 
 # Edge case tests for _ensure_list() function

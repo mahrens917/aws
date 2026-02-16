@@ -8,25 +8,27 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from cost_toolkit.scripts.setup.exceptions import CertificateInfoError
-from cost_toolkit.scripts.setup.verify_iwannabenewyork_domain import (
+from cost_toolkit.scripts.setup.domain_verification_http import (
     HTTP_STATUS_MOVED_PERMANENTLY,
     HTTP_STATUS_OK,
     HttpRequestError,
-    _check_cert_validity,
-    _extract_cert_dict,
-    _parse_cert_dates,
-    _print_cert_info,
     verify_dns_resolution,
     verify_http_connectivity,
     verify_https_connectivity,
 )
+from cost_toolkit.scripts.setup.domain_verification_ssl import (
+    _check_cert_validity,
+    _extract_cert_dict,
+    _parse_cert_dates,
+    _print_cert_info,
+)
+from cost_toolkit.scripts.setup.exceptions import CertificateInfoError
 
 
 class TestDnsResolution:
     """Tests for test_dns_resolution function."""
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.socket.gethostbyname")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http.socket.gethostbyname")
     def test_successful_dns_resolution(self, mock_gethostbyname, capsys):
         """Test successful DNS resolution."""
         mock_gethostbyname.side_effect = ["192.168.1.1", "192.168.1.2"]
@@ -39,7 +41,7 @@ class TestDnsResolution:
         assert "example.com resolves to: 192.168.1.1" in captured.out
         assert "www.example.com resolves to: 192.168.1.2" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.socket.gethostbyname")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http.socket.gethostbyname")
     def test_dns_resolution_failure(self, mock_gethostbyname, capsys):
         """Test DNS resolution failure."""
         mock_gethostbyname.side_effect = socket.gaierror("Name or service not known")
@@ -55,7 +57,7 @@ class TestDnsResolution:
 class TestHttpConnectivity:
     """Tests for test_http_connectivity function."""
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._http_get")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http._http_get")
     def test_http_redirects_to_https(self, mock_get, capsys):
         """Test HTTP redirects to HTTPS."""
         mock_response = MagicMock()
@@ -69,7 +71,7 @@ class TestHttpConnectivity:
         captured = capsys.readouterr()
         assert "HTTP redirects to HTTPS" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._http_get")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http._http_get")
     def test_http_no_redirect(self, mock_get, capsys):
         """Test HTTP without redirect."""
         mock_response = MagicMock()
@@ -83,7 +85,7 @@ class TestHttpConnectivity:
         captured = capsys.readouterr()
         assert f"HTTP response: {HTTP_STATUS_OK}" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._http_get")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http._http_get")
     def test_http_request_exception(self, mock_get, capsys):
         """Test HTTP request exception."""
         mock_get.side_effect = HttpRequestError("Connection error")
@@ -98,7 +100,7 @@ class TestHttpConnectivity:
 class TestHttpsConnectivity:
     """Tests for test_https_connectivity function."""
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._http_get")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http._http_get")
     def test_https_success_with_cloudflare(self, mock_get, capsys):
         """Test successful HTTPS with Cloudflare."""
         mock_response = MagicMock()
@@ -113,7 +115,7 @@ class TestHttpsConnectivity:
         assert "HTTPS connection successful" in captured.out
         assert "Served by Cloudflare" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._http_get")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http._http_get")
     def test_https_success_without_cloudflare(self, mock_get, capsys):
         """Test successful HTTPS without Cloudflare."""
         mock_response = MagicMock()
@@ -128,7 +130,7 @@ class TestHttpsConnectivity:
         assert "HTTPS connection successful" in captured.out
         assert "Served by Cloudflare" not in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._http_get")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http._http_get")
     def test_https_non_ok_status(self, mock_get, capsys):
         """Test HTTPS with non-OK status."""
         mock_response = MagicMock()
@@ -141,7 +143,7 @@ class TestHttpsConnectivity:
         captured = capsys.readouterr()
         assert "HTTPS response: 404" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain._http_get")
+    @patch("cost_toolkit.scripts.setup.domain_verification_http._http_get")
     def test_https_request_exception(self, mock_get, capsys):
         """Test HTTPS request exception."""
         mock_get.side_effect = HttpRequestError("SSL error")
@@ -239,14 +241,14 @@ class TestPrintCertInfo:
         _print_cert_info(subject_dict, issuer_dict, not_before, not_after)
 
         captured = capsys.readouterr()
-        assert "Certificate Subject: Unknown" in captured.out
-        assert "Certificate Issuer: Unknown" in captured.out
+        assert "Certificate Subject: None" in captured.out
+        assert "Certificate Issuer: None" in captured.out
 
 
 class TestCheckCertValidity:
     """Tests for _check_cert_validity function."""
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.datetime")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.datetime")
     def test_cert_is_valid(self, mock_datetime, capsys):
         """Test valid certificate."""
         mock_datetime.datetime.utcnow.return_value = datetime.datetime(2024, 6, 15, 0, 0, 0)
@@ -260,7 +262,7 @@ class TestCheckCertValidity:
         assert "Certificate is valid" in captured.out
         assert "199 days until expiry" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.datetime")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.datetime")
     def test_cert_is_expired(self, mock_datetime, capsys):
         """Test expired certificate."""
         mock_datetime.datetime.utcnow.return_value = datetime.datetime(2025, 1, 1, 0, 0, 0)
@@ -273,7 +275,7 @@ class TestCheckCertValidity:
         captured = capsys.readouterr()
         assert "Certificate is not valid for current date" in captured.out
 
-    @patch("cost_toolkit.scripts.setup.verify_iwannabenewyork_domain.datetime")
+    @patch("cost_toolkit.scripts.setup.domain_verification_ssl.datetime")
     def test_cert_not_yet_valid(self, mock_datetime, capsys):
         """Test not yet valid certificate."""
         mock_datetime.datetime.utcnow.return_value = datetime.datetime(2023, 12, 31, 0, 0, 0)

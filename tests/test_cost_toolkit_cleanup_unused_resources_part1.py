@@ -6,12 +6,14 @@ from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 
-from cost_toolkit.scripts.cleanup.aws_cleanup_unused_resources import (
+from cost_toolkit.scripts.cleanup.unused_security_groups import (
     _categorize_security_groups,
     _collect_used_sgs_from_elb,
     _collect_used_sgs_from_enis,
     _collect_used_sgs_from_instances,
     _collect_used_sgs_from_rds,
+)
+from cost_toolkit.scripts.cleanup.unused_subnets import (
     _collect_used_subnets_from_enis,
     _collect_used_subnets_from_instances,
 )

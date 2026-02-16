@@ -76,6 +76,12 @@ def load_lightsail_resources(lightsail_client) -> tuple[list[dict], list[dict]]:
 
     This keeps client request handling consistent across cleanup scripts.
     """
-    instances = lightsail_client.get_instances().get("instances", [])
-    databases = lightsail_client.get_relational_databases().get("relationalDatabases", [])
+    instances_response = lightsail_client.get_instances()
+    instances = []
+    if "instances" in instances_response:
+        instances = instances_response["instances"]
+    databases_response = lightsail_client.get_relational_databases()
+    databases = []
+    if "relationalDatabases" in databases_response:
+        databases = databases_response["relationalDatabases"]
     return instances, databases

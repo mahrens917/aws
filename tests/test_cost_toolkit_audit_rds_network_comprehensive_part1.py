@@ -102,11 +102,11 @@ class TestExtractInstanceInfo:
         result = _extract_instance_info(instance)
 
         assert result["identifier"] == "minimal-db"
-        assert result["vpc_id"] == "N/A"
-        assert result["subnet_group"] == "N/A"
+        assert result["vpc_id"] is None
+        assert result["subnet_group"] is None
         assert result["subnets"] == []
-        assert result["endpoint"] == "N/A"
-        assert result["port"] == "N/A"
+        assert result["endpoint"] is None
+        assert result["port"] is None
 
 
 class TestExtractClusterInfo:
@@ -176,6 +176,6 @@ class TestExtractClusterInfo:
         result = _extract_cluster_info(cluster)
 
         assert result["engine_mode"] == "serverless"
-        assert result["vpc_id"] == "N/A"
-        assert result["reader_endpoint"] == "N/A"
-        assert result["capacity"] == "N/A"
+        assert result["vpc_id"] is None
+        assert result["reader_endpoint"] is None
+        assert result["capacity"] is None

@@ -2,14 +2,17 @@
 """Explore RDS user data and credentials."""
 
 
+import importlib
 import os
+from typing import Any
 
+psycopg2: Any = None
+PSYCOPG2_AVAILABLE = False
 try:
-    import psycopg2  # type: ignore[import-not-found]
-
+    psycopg2 = importlib.import_module("psycopg2")
     PSYCOPG2_AVAILABLE = True
 except ImportError:
-    PSYCOPG2_AVAILABLE = False
+    pass
 
 from cost_toolkit.scripts.rds.db_inspection_common import (
     analyze_tables,

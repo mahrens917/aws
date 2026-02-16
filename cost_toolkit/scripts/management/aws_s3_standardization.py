@@ -69,10 +69,11 @@ def remove_lifecycle_policy(bucket_name, region):
                 return True
             print(f"❌ Error removing lifecycle policy from {bucket_name}: {e}")
             return False
-        return True  # noqa: TRY300
     except ClientError as e:
         print(f"❌ Unexpected error removing lifecycle policy from {bucket_name}: {e}")
         return False
+    else:
+        return True
 
 
 def _convert_object_to_standard(s3_client, bucket_name, key):
@@ -98,7 +99,7 @@ def _process_page_objects(s3_client, bucket_name, page):
     for obj in page["Contents"]:
         objects_processed += 1
         key = obj["Key"]
-        current_storage_class = obj.get("StorageClass", "STANDARD")
+        current_storage_class = obj.get("StorageClass")
 
         if current_storage_class == "STANDARD":
             continue

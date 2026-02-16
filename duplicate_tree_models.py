@@ -34,7 +34,7 @@ class FileEntry:
 
 
 @dataclass
-class DirectoryNode:  # pylint: disable=too-many-instance-attributes
+class DirectoryNode:
     """Directory representation built from the metadata database."""
 
     path: PathTuple
@@ -55,7 +55,7 @@ class DuplicateCluster:
     nodes: List[DirectoryNode]
 
 
-class ProgressPrinter:  # pylint: disable=too-few-public-methods
+class ProgressPrinter:
     """Simple in-place progress bar."""
 
     def __init__(self, total: int, label: str, width: int = 30):

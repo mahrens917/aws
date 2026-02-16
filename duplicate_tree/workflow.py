@@ -13,7 +13,7 @@ from duplicate_tree.analysis import (
     clusters_to_rows,
     render_report_rows,
 )
-from duplicate_tree.cache import load_cached_report, store_cached_report
+from duplicate_tree.cache import CacheLocation, load_cached_report, store_cached_report
 from duplicate_tree.core import (
     DirectoryIndex,
     find_exact_duplicates,
@@ -40,13 +40,14 @@ def load_cached_duplicates(
     """Attempt to load cached duplicate analysis."""
     if not context.use_cache:
         return None
-    cached_report = load_cached_report(
-        context.db_path,
-        fingerprint,
-        context.base_path_str,
-        context.min_files,
-        context.min_bytes,
+    location = CacheLocation(
+        db_path=context.db_path,
+        fingerprint=fingerprint,
+        base_path=context.base_path_str,
+        min_files=context.min_files,
+        min_bytes=context.min_bytes,
     )
+    cached_report = load_cached_report(location)
     if not cached_report:
         return None
 
@@ -72,14 +73,14 @@ def compute_fresh_duplicates(
     cluster_rows = clusters_to_rows(clusters)
     report_text = render_report_rows(cluster_rows, context.base_path)
     if context.can_cache_results:
-        store_cached_report(
-            context.db_path,
-            fingerprint,
-            context.base_path_str,
-            clusters,
-            context.min_files,
-            context.min_bytes,
+        location = CacheLocation(
+            db_path=context.db_path,
+            fingerprint=fingerprint,
+            base_path=context.base_path_str,
+            min_files=context.min_files,
+            min_bytes=context.min_bytes,
         )
+        store_cached_report(location, clusters)
     return cluster_rows, report_text
 
 

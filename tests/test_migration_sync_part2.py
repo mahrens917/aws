@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from io import BytesIO
+from threading import Event
 from unittest import mock
 
-from migration_sync import BucketSyncer
+from migration_sync import sync_bucket
 
 
 class _FakeBody:
@@ -52,11 +53,10 @@ class _FakeS3:
 
 
 def test_sync_bucket_downloads_files(tmp_path):
-    """BucketSyncer writes downloaded objects to disk."""
+    """sync_bucket writes downloaded objects to disk."""
     fake_s3 = _FakeS3({"file1.txt": b"hello", "dir/file2.bin": b"data"})
-    syncer = BucketSyncer(fake_s3, mock.Mock(), tmp_path)
 
-    syncer.sync_bucket("my-bucket")
+    sync_bucket(fake_s3, mock.Mock(), tmp_path, "my-bucket", Event())
 
     assert (tmp_path / "my-bucket" / "file1.txt").read_bytes() == b"hello"
     assert (tmp_path / "my-bucket" / "dir" / "file2.bin").read_bytes() == b"data"
@@ -65,9 +65,9 @@ def test_sync_bucket_downloads_files(tmp_path):
 def test_sync_bucket_respects_interrupt(tmp_path):
     """Sync stops when interrupted flag is set."""
     fake_s3 = _FakeS3({"file1.txt": b"hello", "file2.txt": b"data"})
-    syncer = BucketSyncer(fake_s3, mock.Mock(), tmp_path)
-    syncer.interrupted = True
+    interrupted = Event()
+    interrupted.set()
 
     # Should not raise but also not download files
-    syncer.sync_bucket("bucket")
+    sync_bucket(fake_s3, mock.Mock(), tmp_path, "bucket", interrupted)
     assert not (tmp_path / "bucket" / "file1.txt").exists()

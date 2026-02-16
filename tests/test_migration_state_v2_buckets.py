@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+from migration_state_managers import BucketScanStatus, BucketVerificationResult, FileMetadata
 from migration_state_v2 import MigrationStateV2, Phase
 
 DEFAULT_BUCKET = "test-bucket"
@@ -33,11 +34,13 @@ def test_migration_state_v2_save_bucket_status(tmp_path: Path):
     state = MigrationStateV2(str(db_path))
 
     state.save_bucket_status(
-        bucket=DEFAULT_BUCKET,
-        file_count=DEFAULT_FILE_COUNT,
-        total_size=DEFAULT_TOTAL_SIZE,
-        storage_classes=DEFAULT_STORAGE,
-        scan_complete=True,
+        BucketScanStatus(
+            bucket=DEFAULT_BUCKET,
+            file_count=DEFAULT_FILE_COUNT,
+            total_size=DEFAULT_TOTAL_SIZE,
+            storage_classes=DEFAULT_STORAGE,
+            scan_complete=True,
+        )
     )
 
     with state.db_conn.get_connection() as conn:
@@ -54,7 +57,9 @@ def test_migration_state_v2_mark_bucket_sync_complete(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.save_bucket_status("bucket1", SMALL_FILE_COUNT, SMALL_TOTAL_SIZE, {})
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket1", file_count=SMALL_FILE_COUNT, total_size=SMALL_TOTAL_SIZE, storage_classes={})
+    )
     state.mark_bucket_sync_complete("bucket1")
 
     with state.db_conn.get_connection() as conn:
@@ -68,14 +73,18 @@ def test_migration_state_v2_mark_bucket_verify_complete_with_metrics(tmp_path: P
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.save_bucket_status("bucket1", SMALL_FILE_COUNT, SMALL_TOTAL_SIZE, {})
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket1", file_count=SMALL_FILE_COUNT, total_size=SMALL_TOTAL_SIZE, storage_classes={})
+    )
     state.mark_bucket_verify_complete(
-        bucket="bucket1",
-        verified_file_count=SMALL_FILE_COUNT,
-        size_verified_count=SMALL_FILE_COUNT,
-        checksum_verified_count=PARTIAL_CHECKSUM_COUNT,
-        total_bytes_verified=SMALL_TOTAL_SIZE,
-        local_file_count=SMALL_FILE_COUNT,
+        BucketVerificationResult(
+            bucket="bucket1",
+            verified_file_count=SMALL_FILE_COUNT,
+            size_verified_count=SMALL_FILE_COUNT,
+            checksum_verified_count=PARTIAL_CHECKSUM_COUNT,
+            total_bytes_verified=SMALL_TOTAL_SIZE,
+            local_file_count=SMALL_FILE_COUNT,
+        )
     )
 
     with state.db_conn.get_connection() as conn:
@@ -91,7 +100,9 @@ def test_migration_state_v2_mark_bucket_delete_complete(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.save_bucket_status("bucket1", SMALL_FILE_COUNT, SMALL_TOTAL_SIZE, {})
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket1", file_count=SMALL_FILE_COUNT, total_size=SMALL_TOTAL_SIZE, storage_classes={})
+    )
     state.mark_bucket_delete_complete("bucket1")
 
     with state.db_conn.get_connection() as conn:
@@ -108,9 +119,15 @@ def test_migration_state_v2_get_all_buckets(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.save_bucket_status("bucket1", SMALL_FILE_COUNT, SMALL_TOTAL_SIZE, {})
-    state.save_bucket_status("bucket2", MEDIUM_FILE_COUNT, MEDIUM_TOTAL_SIZE, {})
-    state.save_bucket_status("bucket3", LARGE_FILE_COUNT, LARGE_TOTAL_SIZE, {})
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket1", file_count=SMALL_FILE_COUNT, total_size=SMALL_TOTAL_SIZE, storage_classes={})
+    )
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket2", file_count=MEDIUM_FILE_COUNT, total_size=MEDIUM_TOTAL_SIZE, storage_classes={})
+    )
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket3", file_count=LARGE_FILE_COUNT, total_size=LARGE_TOTAL_SIZE, storage_classes={})
+    )
 
     buckets = state.get_all_buckets()
 
@@ -123,9 +140,15 @@ def test_migration_state_v2_get_completed_buckets_for_phase(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.save_bucket_status("bucket1", SMALL_FILE_COUNT, SMALL_TOTAL_SIZE, {})
-    state.save_bucket_status("bucket2", MEDIUM_FILE_COUNT, MEDIUM_TOTAL_SIZE, {})
-    state.save_bucket_status("bucket3", LARGE_FILE_COUNT, LARGE_TOTAL_SIZE, {})
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket1", file_count=SMALL_FILE_COUNT, total_size=SMALL_TOTAL_SIZE, storage_classes={})
+    )
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket2", file_count=MEDIUM_FILE_COUNT, total_size=MEDIUM_TOTAL_SIZE, storage_classes={})
+    )
+    state.save_bucket_status(
+        BucketScanStatus(bucket="bucket3", file_count=LARGE_FILE_COUNT, total_size=LARGE_TOTAL_SIZE, storage_classes={})
+    )
 
     state.mark_bucket_sync_complete("bucket1")
     state.mark_bucket_sync_complete("bucket2")
@@ -143,7 +166,15 @@ class TestBucketInfoRetrieval:
         db_path = tmp_path / "test.db"
         state = MigrationStateV2(str(db_path))
 
-        state.save_bucket_status(DEFAULT_BUCKET, INFO_FILE_COUNT, INFO_TOTAL_SIZE, INFO_STORAGE, scan_complete=True)
+        state.save_bucket_status(
+            BucketScanStatus(
+                bucket=DEFAULT_BUCKET,
+                file_count=INFO_FILE_COUNT,
+                total_size=INFO_TOTAL_SIZE,
+                storage_classes=INFO_STORAGE,
+                scan_complete=True,
+            )
+        )
 
         info = state.get_bucket_info(DEFAULT_BUCKET)
 
@@ -169,18 +200,36 @@ def test_migration_state_v2_get_scan_summary(tmp_path: Path):
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
-    state.add_file("b1", "k1", SMALL_TOTAL_SIZE, "e1", "STANDARD", "2025-10-31T00:00:00Z")
-    state.add_file("b1", "k2", SMALL_TOTAL_SIZE, "e2", "GLACIER", "2025-10-31T00:00:00Z")
-    state.add_file("b2", "k3", SMALL_TOTAL_SIZE, "e3", "STANDARD", "2025-10-31T00:00:00Z")
+    state.add_file(
+        FileMetadata(
+            bucket="b1", key="k1", size=SMALL_TOTAL_SIZE, etag="e1", storage_class="STANDARD", last_modified="2025-10-31T00:00:00Z"
+        )
+    )
+    state.add_file(
+        FileMetadata(bucket="b1", key="k2", size=SMALL_TOTAL_SIZE, etag="e2", storage_class="GLACIER", last_modified="2025-10-31T00:00:00Z")
+    )
+    state.add_file(
+        FileMetadata(
+            bucket="b2", key="k3", size=SMALL_TOTAL_SIZE, etag="e3", storage_class="STANDARD", last_modified="2025-10-31T00:00:00Z"
+        )
+    )
 
-    state.save_bucket_status("b1", 2, 2 * SMALL_TOTAL_SIZE, {"STANDARD": 1, "GLACIER": 1}, scan_complete=True)
-    state.save_bucket_status("b2", 1, SMALL_TOTAL_SIZE, {"STANDARD": 1}, scan_complete=True)
     state.save_bucket_status(
-        "b3",
-        INCOMPLETE_FILE_COUNT,
-        INCOMPLETE_TOTAL_SIZE,
-        {"STANDARD": INCOMPLETE_FILE_COUNT},
-        scan_complete=False,
+        BucketScanStatus(
+            bucket="b1", file_count=2, total_size=2 * SMALL_TOTAL_SIZE, storage_classes={"STANDARD": 1, "GLACIER": 1}, scan_complete=True
+        )
+    )
+    state.save_bucket_status(
+        BucketScanStatus(bucket="b2", file_count=1, total_size=SMALL_TOTAL_SIZE, storage_classes={"STANDARD": 1}, scan_complete=True)
+    )
+    state.save_bucket_status(
+        BucketScanStatus(
+            bucket="b3",
+            file_count=INCOMPLETE_FILE_COUNT,
+            total_size=INCOMPLETE_TOTAL_SIZE,
+            storage_classes={"STANDARD": INCOMPLETE_FILE_COUNT},
+            scan_complete=False,
+        )
     )
 
     summary = state.get_scan_summary()

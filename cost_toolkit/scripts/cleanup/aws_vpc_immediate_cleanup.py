@@ -29,7 +29,9 @@ def release_public_ip_from_instance(instance_id, region_name):
         if "NetworkInterfaces" in instance:
             network_interfaces = instance["NetworkInterfaces"]
         first_interface = network_interfaces[0] if network_interfaces else {}
-        association = first_interface.get("Association", {})
+        association = {}
+        if "Association" in first_interface:
+            association = first_interface["Association"]
         association_id = association.get("AssociationId")
         allocation_id = association.get("AllocationId")
 
@@ -117,7 +119,9 @@ def _check_vpc_ec2_instances(ec2, vpc_id, analysis):
 def _check_vpc_igws(ec2, vpc_id, analysis):
     """Check for attached Internet Gateways in a VPC"""
     igw_response = ec2.describe_internet_gateways(Filters=[{"Name": "attachment.vpc-id", "Values": [vpc_id]}])
-    igws = igw_response.get("InternetGateways", [])
+    igws = []
+    if "InternetGateways" in igw_response:
+        igws = igw_response["InternetGateways"]
     if igws:
         analysis["dependencies"].append(f"{len(igws)} Internet Gateways")
 
@@ -125,7 +129,9 @@ def _check_vpc_igws(ec2, vpc_id, analysis):
 def _check_vpc_nat_gateways(ec2, vpc_id, analysis):
     """Check for NAT Gateways in a VPC"""
     nat_response = ec2.describe_nat_gateways(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}])
-    nat_gateways = nat_response.get("NatGateways", [])
+    nat_gateways = []
+    if "NatGateways" in nat_response:
+        nat_gateways = nat_response["NatGateways"]
     nats = [nat for nat in nat_gateways if nat["State"] != "deleted"]
     if nats:
         analysis["blocking_resources"].append(f"{len(nats)} NAT Gateways")
@@ -135,7 +141,9 @@ def _check_vpc_nat_gateways(ec2, vpc_id, analysis):
 def _check_vpc_endpoints(ec2, vpc_id, analysis):
     """Check for VPC Endpoints in a VPC"""
     endpoints_response = ec2.describe_vpc_endpoints(Filters=[{"Name": "vpc-id", "Values": [vpc_id]}])
-    vpc_endpoints = endpoints_response.get("VpcEndpoints", [])
+    vpc_endpoints = []
+    if "VpcEndpoints" in endpoints_response:
+        vpc_endpoints = endpoints_response["VpcEndpoints"]
     endpoints = [ep for ep in vpc_endpoints if ep["State"] != "deleted"]
     if endpoints:
         analysis["blocking_resources"].append(f"{len(endpoints)} VPC Endpoints")
