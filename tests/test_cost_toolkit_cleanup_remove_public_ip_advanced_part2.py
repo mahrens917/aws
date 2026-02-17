@@ -22,7 +22,7 @@ def test_verify_and_cleanup_success(capsys):
         "cost_toolkit.scripts.cleanup.aws_remove_public_ip_advanced.get_instance_info",
         return_value=mock_instance,
     ):
-        with patch("time.sleep"):
+        with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
             result = _verify_and_cleanup(mock_ec2, "i-123", "eni-old", "us-east-1")
     assert result is True
     mock_ec2.delete_network_interface.assert_called_once_with(NetworkInterfaceId="eni-old")
@@ -38,7 +38,7 @@ def test_verify_and_cleanup_still_has_public_ip(capsys):
         "cost_toolkit.scripts.cleanup.aws_remove_public_ip_advanced.get_instance_info",
         return_value=mock_instance,
     ):
-        with patch("time.sleep"):
+        with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
             result = _verify_and_cleanup(mock_ec2, "i-123", "eni-old", "us-east-1")
     assert result is False
     captured = capsys.readouterr()
@@ -57,7 +57,7 @@ def test_verify_and_cleanup_eni_deletion_error(capsys):
         "cost_toolkit.scripts.cleanup.aws_remove_public_ip_advanced.get_instance_info",
         return_value=mock_instance,
     ):
-        with patch("time.sleep"):
+        with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
             result = _verify_and_cleanup(mock_ec2, "i-123", "eni-old", "us-east-1")
     assert result is True  # Still succeeds even if ENI cleanup fails
     captured = capsys.readouterr()
@@ -131,7 +131,7 @@ class TestNetworkInterfaceReplacementErrors:
                     {"Error": {"Code": "InvalidAttachmentID"}}, "detach_network_interface"
                 )
                 mock_client.return_value = mock_ec2
-                with patch("time.sleep"):
+                with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                     result = remove_public_ip_by_network_interface_replacement("i-123", "us-east-1")
         assert result is False
 
@@ -154,7 +154,7 @@ class TestNetworkInterfaceReplacementErrors:
                 mock_ec2.create_network_interface.return_value = {"NetworkInterface": {"NetworkInterfaceId": "eni-new"}}
                 mock_ec2.start_instances.side_effect = ClientError({"Error": {"Code": "IncorrectInstanceState"}}, "start_instances")
                 mock_client.return_value = mock_ec2
-                with patch("time.sleep"):
+                with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                     result = remove_public_ip_by_network_interface_replacement("i-123", "us-east-1")
         assert result is False
         captured = capsys.readouterr()
@@ -179,7 +179,7 @@ class TestSimpleStopStartWithoutPublicIp:
             with patch("boto3.client") as mock_client:
                 mock_ec2 = MagicMock()
                 mock_client.return_value = mock_ec2
-                with patch("time.sleep"):
+                with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                     result = simple_stop_start_without_public_ip("i-123", "us-east-1")
         assert result is True
         mock_ec2.modify_subnet_attribute.assert_called_once()
@@ -200,7 +200,7 @@ class TestSimpleStopStartWithoutPublicIp:
             with patch("boto3.client") as mock_client:
                 mock_ec2 = MagicMock()
                 mock_client.return_value = mock_ec2
-                with patch("time.sleep"):
+                with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                     result = simple_stop_start_without_public_ip("i-123", "us-east-1")
         assert result is False
         captured = capsys.readouterr()

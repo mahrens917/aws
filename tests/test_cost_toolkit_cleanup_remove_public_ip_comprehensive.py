@@ -129,7 +129,7 @@ class TestRetryWithSubnetModification:
             "cost_toolkit.scripts.cleanup.aws_remove_public_ip.get_instance_info",
             return_value=mock_instance_final,
         ):
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                 result = retry_with_subnet_modification(mock_ec2, "i-123", "subnet-123", "us-east-1")
         assert result is True
         mock_ec2.modify_subnet_attribute.assert_called_once()
@@ -144,7 +144,7 @@ class TestRetryWithSubnetModification:
             "cost_toolkit.scripts.cleanup.aws_remove_public_ip.get_instance_info",
             return_value=mock_instance_final,
         ):
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                 result = retry_with_subnet_modification(mock_ec2, "i-123", "subnet-123", "us-east-1")
         assert result is False
         captured = capsys.readouterr()
@@ -171,7 +171,7 @@ class TestVerifyPublicIpRemoved:
             "cost_toolkit.scripts.cleanup.aws_remove_public_ip.get_instance_info",
             return_value=mock_instance,
         ):
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                 result = verify_public_ip_removed(mock_ec2, "i-123", "us-east-1")
         assert result is True
         captured = capsys.readouterr()
@@ -190,7 +190,7 @@ class TestVerifyPublicIpRemoved:
             "cost_toolkit.scripts.cleanup.aws_remove_public_ip.get_instance_info",
             side_effect=[mock_instance_first, mock_instance_final],
         ):
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                 result = verify_public_ip_removed(mock_ec2, "i-123", "us-east-1")
         assert result is True
         mock_ec2.modify_subnet_attribute.assert_called_once()
@@ -235,7 +235,7 @@ class TestRemovePublicIpFromInstance:
             with patch("boto3.client") as mock_client:
                 mock_ec2 = MagicMock()
                 mock_client.return_value = mock_ec2
-                with patch("time.sleep"):
+                with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
                     result = remove_public_ip_from_instance("i-123", "us-east-1")
         assert result is True
 

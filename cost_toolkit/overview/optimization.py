@@ -3,7 +3,7 @@ AWS Cost Optimization Opportunity Analysis
 Scans for unattached EBS volumes, unused Elastic IPs, and old snapshots.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import boto3
 
@@ -96,14 +96,14 @@ def _check_old_snapshots():
     """
     old_snapshots = 0
     snapshot_cost = 0.0
-    cutoff_date = datetime.now() - timedelta(days=90)
+    cutoff_date = datetime.now(tz=timezone.utc) - timedelta(days=90)
 
     for region in get_all_aws_regions():
         ec2 = boto3.client("ec2", region_name=region)
         snapshots = ec2.describe_snapshots(OwnerIds=["self"])["Snapshots"]
 
         for snapshot in snapshots:
-            if snapshot["StartTime"].replace(tzinfo=None) < cutoff_date:
+            if snapshot["StartTime"] < cutoff_date:
                 old_snapshots += 1
                 size_gb = snapshot["VolumeSize"]
                 snapshot_cost += calculate_snapshot_cost(size_gb)

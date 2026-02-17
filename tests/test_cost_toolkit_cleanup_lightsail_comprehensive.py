@@ -35,11 +35,12 @@ class TestDeleteInstance:
             "bundleId": "nano_2_0",
         }
 
-        with patch(
-            "cost_toolkit.scripts.cleanup.aws_lightsail_cleanup.estimate_instance_cost",
-            return_value=5.0,
-        ):
-            deleted, cost = _delete_instance(mock_client, instance)
+        with patch("cost_toolkit.scripts.cleanup.aws_lightsail_cleanup._WAIT_EVENT"):
+            with patch(
+                "cost_toolkit.scripts.cleanup.aws_lightsail_cleanup.estimate_instance_cost",
+                return_value=5.0,
+            ):
+                deleted, cost = _delete_instance(mock_client, instance)
 
         assert deleted == 1
         assert cost == 5.0
@@ -72,11 +73,12 @@ class TestDeleteInstance:
             "state": {"name": "stopped"},
         }
 
-        with patch(
-            "cost_toolkit.scripts.cleanup.aws_lightsail_cleanup.estimate_instance_cost",
-            return_value=0.0,
-        ):
-            deleted, _ = _delete_instance(mock_client, instance)
+        with patch("cost_toolkit.scripts.cleanup.aws_lightsail_cleanup._WAIT_EVENT"):
+            with patch(
+                "cost_toolkit.scripts.cleanup.aws_lightsail_cleanup.estimate_instance_cost",
+                return_value=0.0,
+            ):
+                deleted, _ = _delete_instance(mock_client, instance)
 
         assert deleted == 1
 
@@ -93,11 +95,12 @@ class TestDeleteDatabase:
             "relationalDatabaseBundleId": "micro_1_0",
         }
 
-        with patch(
-            "cost_toolkit.scripts.cleanup.aws_lightsail_cleanup.estimate_database_cost",
-            return_value=15.0,
-        ):
-            deleted, cost = _delete_database(mock_client, database)
+        with patch("cost_toolkit.scripts.cleanup.aws_lightsail_cleanup._WAIT_EVENT"):
+            with patch(
+                "cost_toolkit.scripts.cleanup.aws_lightsail_cleanup.estimate_database_cost",
+                return_value=15.0,
+            ):
+                deleted, cost = _delete_database(mock_client, database)
 
         assert deleted == 1
         assert cost == 15.0

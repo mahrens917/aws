@@ -29,9 +29,7 @@ def release_public_ip_from_instance(instance_id, region_name):
         if "NetworkInterfaces" in instance:
             network_interfaces = instance["NetworkInterfaces"]
         first_interface = network_interfaces[0] if network_interfaces else {}
-        association = {}
-        if "Association" in first_interface:
-            association = first_interface["Association"]
+        association = first_interface.get("Association", {})
         association_id = association.get("AssociationId")
         allocation_id = association.get("AllocationId")
 

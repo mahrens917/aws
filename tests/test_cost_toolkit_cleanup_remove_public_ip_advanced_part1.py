@@ -112,7 +112,7 @@ class TestCreateNewEni:
         """Test successful ENI creation."""
         mock_ec2 = MagicMock()
         mock_ec2.create_network_interface.return_value = {"NetworkInterface": {"NetworkInterfaceId": "eni-new123"}}
-        with patch("time.sleep"):
+        with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
             eni_id = _create_new_eni(mock_ec2, "subnet-123", ["sg-123"], "i-123")
         assert eni_id == "eni-new123"
         mock_ec2.create_network_interface.assert_called_once_with(
@@ -138,7 +138,7 @@ class TestCreateNewEni:
         """Test ENI creation with multiple security groups."""
         mock_ec2 = MagicMock()
         mock_ec2.create_network_interface.return_value = {"NetworkInterface": {"NetworkInterfaceId": "eni-multi"}}
-        with patch("time.sleep"):
+        with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
             eni_id = _create_new_eni(mock_ec2, "subnet-123", ["sg-1", "sg-2", "sg-3"], "i-456")
         assert eni_id == "eni-multi"
         call_args = mock_ec2.create_network_interface.call_args[1]
@@ -155,7 +155,7 @@ class TestReplaceEni:
             "NetworkInterfaceId": "eni-old",
             "Attachment": {"AttachmentId": "attach-123"},
         }
-        with patch("time.sleep"):
+        with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
             result = _replace_eni(mock_ec2, "i-123", current_eni, "eni-new")
         assert result is True
         mock_ec2.detach_network_interface.assert_called_once_with(AttachmentId="attach-123", Force=True)
@@ -191,7 +191,7 @@ class TestReplaceEni:
             "NetworkInterfaceId": "eni-old",
             "Attachment": {"AttachmentId": "attach-123"},
         }
-        with patch("time.sleep"):
+        with patch("cost_toolkit.scripts.cleanup.public_ip_common._WAIT_EVENT"):
             result = _replace_eni(mock_ec2, "i-123", current_eni, "eni-new")
         assert result is False
         captured = capsys.readouterr()

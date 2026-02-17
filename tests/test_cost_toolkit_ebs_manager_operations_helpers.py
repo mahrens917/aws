@@ -142,7 +142,7 @@ def test_get_last_read_activity_with_data(mock_datetime_cls):
 
     result = _get_last_read_activity(mock_cloudwatch, "vol-123")
 
-    assert_equal(result, datetime(2024, 3, 12, 14, 0, 0, tzinfo=timezone.utc))
+    assert_equal(result, "2024-03-12 14:00:00 UTC")
     mock_cloudwatch.get_metric_statistics.assert_called_once()
     call_args = mock_cloudwatch.get_metric_statistics.call_args
     assert_equal(call_args[1]["Namespace"], "AWS/EBS")

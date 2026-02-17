@@ -26,7 +26,7 @@ class TestTerminateInstanceSafely:
         """Test successful safe termination."""
         with patch("boto3.client") as mock_client:
             with patch("cost_toolkit.scripts.cleanup.aws_instance_termination.get_instance_details") as mock_get:
-                with patch("time.sleep"):
+                with patch("cost_toolkit.scripts.cleanup.aws_instance_termination._WAIT_EVENT") as mock_event:
                     mock_ec2 = MagicMock()
                     mock_client.return_value = mock_ec2
                     instance_info = {
@@ -53,6 +53,7 @@ class TestTerminateInstanceSafely:
                     }
                     result = terminate_instance_safely("i-123", "us-east-1")
                     assert result is True
+                    mock_event.wait.assert_called_once_with(10)
 
     def test_already_terminated(self, capsys):
         """Test termination of already terminated instance."""

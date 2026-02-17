@@ -16,15 +16,13 @@ from cost_toolkit.common.aws_common import (
     get_instance_name,
 )
 from cost_toolkit.scripts.aws_security import delete_security_group as delete_security_group_shared
-from cost_toolkit.scripts.ec2_describe_ops import describe_addresses as describe_addresses
 from cost_toolkit.scripts.ec2_describe_ops import (
-    describe_network_interfaces as describe_network_interfaces,
+    describe_addresses,
+    describe_network_interfaces,
+    describe_security_groups,
+    describe_snapshots,
+    describe_volumes,
 )
-from cost_toolkit.scripts.ec2_describe_ops import (
-    describe_security_groups as describe_security_groups,
-)
-from cost_toolkit.scripts.ec2_describe_ops import describe_snapshots as describe_snapshots
-from cost_toolkit.scripts.ec2_describe_ops import describe_volumes as describe_volumes
 
 
 def get_all_regions(

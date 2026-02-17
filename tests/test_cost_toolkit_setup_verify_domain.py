@@ -251,7 +251,7 @@ class TestCheckCertValidity:
     @patch("cost_toolkit.scripts.setup.domain_verification_ssl.datetime")
     def test_cert_is_valid(self, mock_datetime, capsys):
         """Test valid certificate."""
-        mock_datetime.datetime.utcnow.return_value = datetime.datetime(2024, 6, 15, 0, 0, 0)
+        mock_datetime.datetime.now.return_value = datetime.datetime(2024, 6, 15, 0, 0, 0, tzinfo=datetime.timezone.utc)
         not_before = datetime.datetime(2024, 1, 1, 0, 0, 0)
         not_after = datetime.datetime(2024, 12, 31, 23, 59, 59)
 
@@ -265,7 +265,7 @@ class TestCheckCertValidity:
     @patch("cost_toolkit.scripts.setup.domain_verification_ssl.datetime")
     def test_cert_is_expired(self, mock_datetime, capsys):
         """Test expired certificate."""
-        mock_datetime.datetime.utcnow.return_value = datetime.datetime(2025, 1, 1, 0, 0, 0)
+        mock_datetime.datetime.now.return_value = datetime.datetime(2025, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
         not_before = datetime.datetime(2024, 1, 1, 0, 0, 0)
         not_after = datetime.datetime(2024, 12, 31, 23, 59, 59)
 
@@ -278,7 +278,7 @@ class TestCheckCertValidity:
     @patch("cost_toolkit.scripts.setup.domain_verification_ssl.datetime")
     def test_cert_not_yet_valid(self, mock_datetime, capsys):
         """Test not yet valid certificate."""
-        mock_datetime.datetime.utcnow.return_value = datetime.datetime(2023, 12, 31, 0, 0, 0)
+        mock_datetime.datetime.now.return_value = datetime.datetime(2023, 12, 31, 0, 0, 0, tzinfo=datetime.timezone.utc)
         not_before = datetime.datetime(2024, 1, 1, 0, 0, 0)
         not_after = datetime.datetime(2024, 12, 31, 23, 59, 59)
 

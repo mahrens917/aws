@@ -59,7 +59,7 @@ def _print_cert_info(subject_dict, issuer_dict, not_before, not_after):
 
 def _check_cert_validity(not_before, not_after):
     """Check if certificate is currently valid"""
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
     if not_before <= now <= not_after:
         days_until_expiry = (not_after - now).days
         print(f"  ✅ Certificate is valid ({days_until_expiry} days until expiry)")

@@ -23,7 +23,7 @@ class TestProcessSnapshotDeletionsConfiguration:
         with patch("boto3.client") as mock_boto3:
             mock_ec2 = MagicMock()
             mock_boto3.return_value = mock_ec2
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final._WAIT_EVENT"):
                 with patch(
                     "cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final.delete_snapshot",
                     return_value=True,
@@ -46,7 +46,7 @@ class TestProcessSnapshotDeletionsConfiguration:
         with patch("boto3.client") as mock_boto3:
             mock_ec2 = MagicMock()
             mock_boto3.return_value = mock_ec2
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final._WAIT_EVENT"):
                 with patch(
                     "cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final.delete_snapshot",
                     return_value=True,
@@ -196,7 +196,7 @@ class TestIntegrationScenarios:
                     mock_boto3.return_value = mock_ec2
                     mock_creds.return_value = ("key", "secret")
 
-                    with patch("time.sleep"):
+                    with patch("cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final._WAIT_EVENT"):
                         delete_freed_snapshots()
 
             captured = capsys.readouterr()
@@ -217,7 +217,7 @@ class TestIntegrationScenarios:
         with patch("boto3.client") as mock_boto3:
             mock_ec2 = MagicMock()
             mock_boto3.return_value = mock_ec2
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final._WAIT_EVENT"):
                 with patch(
                     "cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final.delete_snapshot",
                     return_value=True,
@@ -238,7 +238,7 @@ class TestIntegrationScenarios:
         with patch("boto3.client") as mock_boto3:
             mock_ec2 = MagicMock()
             mock_boto3.return_value = mock_ec2
-            with patch("time.sleep"):
+            with patch("cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final._WAIT_EVENT"):
                 with patch("cost_toolkit.scripts.cleanup.aws_snapshot_cleanup_final.delete_snapshot") as mock_delete:
                     mock_delete.side_effect = [True, False, True]
 

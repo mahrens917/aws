@@ -100,7 +100,7 @@ def _get_last_read_activity(cloudwatch_client, volume_id: str) -> str:
 
         if metrics_response["Datapoints"]:
             sorted_datapoints = sorted(metrics_response["Datapoints"], key=lambda x: x["Timestamp"], reverse=True)
-            return sorted_datapoints[0]["Timestamp"]
+            return sorted_datapoints[0]["Timestamp"].strftime("%Y-%m-%d %H:%M:%S UTC")
 
     except ClientError as e:
         return f"Error retrieving metrics: {str(e)}"

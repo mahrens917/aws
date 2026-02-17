@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -201,8 +201,8 @@ def test_check_old_snapshots_with_old_snapshots():
     with patch("cost_toolkit.overview.optimization.get_all_aws_regions") as mock_regions:
         with patch("boto3.client") as mock_client:
             mock_ec2 = MagicMock()
-            old_date = datetime.now() - timedelta(days=100)
-            recent_date = datetime.now() - timedelta(days=10)
+            old_date = datetime.now(tz=timezone.utc) - timedelta(days=100)
+            recent_date = datetime.now(tz=timezone.utc) - timedelta(days=10)
 
             mock_ec2.describe_snapshots.return_value = {
                 "Snapshots": [
@@ -227,7 +227,7 @@ def test_check_old_snapshots_no_old_snapshots():
     with patch("cost_toolkit.overview.optimization.get_all_aws_regions") as mock_regions:
         with patch("boto3.client") as mock_client:
             mock_ec2 = MagicMock()
-            recent_date = datetime.now() - timedelta(days=10)
+            recent_date = datetime.now(tz=timezone.utc) - timedelta(days=10)
 
             mock_ec2.describe_snapshots.return_value = {
                 "Snapshots": [
@@ -269,7 +269,7 @@ def test_check_old_snapshots_single_old_snapshot():
     with patch("cost_toolkit.overview.optimization.get_all_aws_regions") as mock_regions:
         with patch("boto3.client") as mock_client:
             mock_ec2 = MagicMock()
-            old_date = datetime.now() - timedelta(days=100)
+            old_date = datetime.now(tz=timezone.utc) - timedelta(days=100)
 
             mock_ec2.describe_snapshots.return_value = {
                 "Snapshots": [
