@@ -21,9 +21,9 @@
 
 ```bash
 # Embedding Server (OpenAI-compatible)
-export OPENAI_API_BASE="http://localhost:8080/v1"
-export OPENAI_API_KEY="dummy-key"
-export OPENAI_EMBEDDING_MODEL="text-embedding-ada-002"
+export LOCAL_EMBEDDING_API_BASE="http://localhost:8080/v1"
+export LOCAL_EMBEDDING_API_KEY="dummy-key"
+export LOCAL_EMBEDDING_MODEL="text-embedding-ada-002"
 
 # Qdrant Vector Database
 export QDRANT_URL="http://localhost:6333"
@@ -37,7 +37,7 @@ export VECTOR_DIMENSIONS="384"
 ```yaml
 # roo-config.yaml
 embeddings:
-  provider: "openai"
+  provider: "local"
   api_base: "http://localhost:8080/v1"
   api_key: "dummy-key"
   model: "text-embedding-ada-002"
@@ -54,7 +54,7 @@ vector_store:
 ```json
 {
   "embeddings": {
-    "provider": "openai",
+    "provider": "local",
     "api_base": "http://localhost:8080/v1",
     "api_key": "dummy-key",
     "model": "text-embedding-ada-002",
@@ -82,8 +82,8 @@ vector_store:
 
 2. **Set environment variables:**
    ```bash
-   export OPENAI_API_BASE="http://localhost:8080/v1"
-   export OPENAI_API_KEY="dummy-key"
+   export LOCAL_EMBEDDING_API_BASE="http://localhost:8080/v1"
+   export LOCAL_EMBEDDING_API_KEY="dummy-key"
    export QDRANT_URL="http://localhost:6333"
    ```
 

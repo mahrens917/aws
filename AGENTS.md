@@ -4,7 +4,7 @@
 - Install with `python -m pip install -e .`; keep generated artifacts (policies, DB files) out of git.
 
 ## Core Commands
-- CI entry: `make check` or `python -m ci_tools.ci --model gpt-5-codex` (delegates to `ci_tools/scripts/ci.sh` via `ci_shared.mk`).
+- CI entry: `make check` or `python -m ci_tools.ci --model claude-sonnet-4-6` (delegates to `ci_tools/scripts/ci.sh` via `ci_shared.mk`).
 - Tests: `pytest tests/ --cov=. --cov-fail-under=80 --cov-report=term -W error` (serial; no `-n`). Coverage guard enforces 80%.
 - Dev helpers: `make format` (`isort --profile black .` + `black .`), `make lint` (`pylint`), `make type` (`pyright`), `make test` (`pytest`).
 - Operational CLIs: `python migrate_v2.py status/reset`, `python block_s3.py --all`, `python apply_block.py --all --dry-run`—prefer dry runs when testing.

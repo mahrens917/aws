@@ -29,10 +29,10 @@ text-embedding-ada-002
 
 ### Method 1: Environment Variables (Recommended)
 ```bash
-export OPENAI_API_BASE="http://localhost:8080/v1"
-export OPENAI_API_KEY="dummy-key"
-export OPENAI_EMBEDDING_MODEL="text-embedding-ada-002"
-export OPENAI_EMBEDDING_DIMENSIONS="384"
+export LOCAL_EMBEDDING_API_BASE="http://localhost:8080/v1"
+export LOCAL_EMBEDDING_API_KEY="dummy-key"
+export LOCAL_EMBEDDING_MODEL="text-embedding-ada-002"
+export LOCAL_EMBEDDING_DIMENSIONS="384"
 ```
 
 ### Method 2: Roo Configuration File
@@ -40,7 +40,7 @@ If Roo uses a config file (`.roo-config`, `roo.yaml`, etc.), add:
 
 ```yaml
 embeddings:
-  provider: "openai"
+  provider: "local"
   api_base: "http://localhost:8080/v1"
   api_key: "dummy-key"
   model: "text-embedding-ada-002"
@@ -51,7 +51,7 @@ Or in JSON format:
 ```json
 {
   "embeddings": {
-    "provider": "openai",
+    "provider": "local",
     "api_base": "http://localhost:8080/v1",
     "api_key": "dummy-key",
     "model": "text-embedding-ada-002",
