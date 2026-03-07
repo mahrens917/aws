@@ -9,8 +9,8 @@ from typing import Optional
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_ec2_client
-from cost_toolkit.common.aws_common import find_resource_region
 from cost_toolkit.common.aws_common import (
+    find_resource_region,
     get_all_aws_regions,
     get_common_regions_extended,
     get_instance_name,
@@ -23,7 +23,6 @@ from cost_toolkit.scripts.ec2_describe_ops import (
     describe_snapshots,
     describe_volumes,
 )
-
 
 get_all_regions = get_all_aws_regions
 

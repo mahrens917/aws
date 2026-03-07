@@ -7,9 +7,11 @@ from unittest.mock import MagicMock, patch
 from botocore.exceptions import ClientError
 
 from cost_toolkit.scripts.management.ebs_manager.utils import (
+    _get_instance_name_with_client,
     find_volume_region,
     get_all_aws_regions,
     get_instance_name,
+    get_instance_name_by_region,
     get_volume_tags,
 )
 from tests.assertions import assert_equal
@@ -90,6 +92,33 @@ def test_get_instance_name_converts_none_to_no_name(mock_boto_client, mock_get_n
     result = get_instance_name("i-1234567890abcdef0", "us-east-1")
 
     assert result is None
+
+
+@patch("cost_toolkit.scripts.management.ebs_manager.utils.create_ec2_client")
+@patch("cost_toolkit.scripts.management.ebs_manager.utils.get_instance_name")
+def test_get_instance_name_by_region(mock_get_name, mock_create_client):
+    """Test get_instance_name_by_region creates client and delegates."""
+    mock_ec2 = MagicMock()
+    mock_create_client.return_value = mock_ec2
+    mock_get_name.return_value = "my-instance"
+
+    result = get_instance_name_by_region("i-1234567890abcdef0", "us-east-1")
+
+    assert_equal(result, "my-instance")
+    mock_create_client.assert_called_once_with("us-east-1")
+    mock_get_name.assert_called_once_with(mock_ec2, "i-1234567890abcdef0")
+
+
+@patch("cost_toolkit.scripts.management.ebs_manager.utils._aws_common_get_instance_name")
+def test_get_instance_name_with_client(mock_aws_get_name):
+    """Test _get_instance_name_with_client delegates to aws_common."""
+    mock_ec2 = MagicMock()
+    mock_aws_get_name.return_value = "named-instance"
+
+    result = _get_instance_name_with_client(mock_ec2, "i-1234567890abcdef0")
+
+    assert_equal(result, "named-instance")
+    mock_aws_get_name.assert_called_once_with(mock_ec2, "i-1234567890abcdef0")
 
 
 def test_get_volume_tags():
