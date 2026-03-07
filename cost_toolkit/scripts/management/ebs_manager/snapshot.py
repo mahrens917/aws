@@ -9,7 +9,7 @@ from typing import Dict, Optional
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
-from .exceptions import VolumeNotFoundError
+from .operations import VolumeNotFoundError
 from .utils import find_volume_region, get_volume_tags
 
 

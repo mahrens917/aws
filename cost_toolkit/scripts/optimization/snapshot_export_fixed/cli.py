@@ -7,6 +7,7 @@ from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_common import create_ec2_and_s3_clients
 from cost_toolkit.common.credential_utils import setup_aws_credentials
+from cost_toolkit.common.s3_utils import create_s3_bucket_with_region
 from cost_toolkit.scripts.optimization.snapshot_export_common import (
     create_ami_from_snapshot,
     create_s3_bucket_if_not_exists,
@@ -23,7 +24,6 @@ from .constants import (
     ExportTaskStuckException,
 )
 from .export_helpers import export_ami_to_s3_with_recovery
-from .export_ops import create_s3_bucket_new
 from .monitoring import calculate_cost_savings, verify_s3_export_final
 from .recovery import (
     check_existing_completed_exports,
@@ -34,7 +34,8 @@ from .recovery import (
 
 def _setup_aws_clients(region, aws_access_key_id, aws_secret_access_key):
     """Create and return EC2 and S3 clients for the given region."""
-    return create_ec2_and_s3_clients(region, aws_access_key_id, aws_secret_access_key)
+    clients = create_ec2_and_s3_clients(region, aws_access_key_id, aws_secret_access_key)
+    return clients
 
 
 def _setup_s3_bucket_for_export(s3_client, region):
@@ -47,7 +48,7 @@ def _setup_s3_bucket_for_export(s3_client, region):
     try:
         create_s3_bucket_if_not_exists(s3_client, bucket_name, region)
     except s3_client.exceptions.NoSuchBucket:
-        create_s3_bucket_new(s3_client, bucket_name, region)
+        create_s3_bucket_with_region(s3_client, bucket_name, region)
 
     setup_s3_bucket_versioning(s3_client, bucket_name)
 

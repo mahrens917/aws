@@ -7,7 +7,9 @@ import json
 import time
 from typing import Dict, Iterable, List, Set
 
-from duplicate_tree_models import (
+from migration_verify_common import should_ignore_key
+
+from .models import (
     ChildSignatureMissingError,
     DirectoryNode,
     DuplicateCluster,
@@ -15,7 +17,6 @@ from duplicate_tree_models import (
     PathTuple,
     ProgressPrinter,
 )
-from migration_verify_common import should_ignore_key
 
 MIN_DUPLICATE_CLUSTER = 2
 

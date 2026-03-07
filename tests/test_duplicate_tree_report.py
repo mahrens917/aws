@@ -1,6 +1,6 @@
 """Tests for duplicate_tree_report functionality."""
 
-from duplicate_tree_report import DirectoryIndex, find_exact_duplicates
+from duplicate_tree import DirectoryIndex, find_exact_duplicates
 from tests.assertions import assert_equal
 
 

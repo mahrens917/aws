@@ -21,7 +21,7 @@ from duplicate_tree.analysis import (
     sort_node_rows,
 )
 from duplicate_tree.core import DirectoryIndex, DuplicateCluster
-from duplicate_tree_models import DirectoryNode, FilesTableReadError
+from duplicate_tree.models import DirectoryNode, FilesTableReadError
 
 
 def _create_test_db(tmp_path: Path, include_files_table: bool = True) -> Path:

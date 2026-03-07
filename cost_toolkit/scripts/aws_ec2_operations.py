@@ -9,7 +9,7 @@ from typing import Optional
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_ec2_client
-from cost_toolkit.common.aws_common import find_resource_region as find_resource_region_canonical
+from cost_toolkit.common.aws_common import find_resource_region
 from cost_toolkit.common.aws_common import (
     get_all_aws_regions,
     get_common_regions_extended,
@@ -25,33 +25,13 @@ from cost_toolkit.scripts.ec2_describe_ops import (
 )
 
 
-def get_all_regions(
-    aws_access_key_id: Optional[str] = None,
-    aws_secret_access_key: Optional[str] = None,
-) -> list[str]:
-    """
-    Get list of all available AWS regions from EC2 API.
-
-    Raises:
-        ClientError: If the AWS API call fails.
-    """
-    return get_all_aws_regions(aws_access_key_id, aws_secret_access_key)
-
-
-def find_resource_region(
-    resource_type: str,
-    resource_id: str,
-    regions: Optional[list[str]] = None,
-    aws_access_key_id: Optional[str] = None,
-    aws_secret_access_key: Optional[str] = None,
-) -> Optional[str]:
-    """Delegates to canonical implementation in aws_common."""
-    return find_resource_region_canonical(resource_type, resource_id, regions, aws_access_key_id, aws_secret_access_key)
+get_all_regions = get_all_aws_regions
 
 
 def get_common_regions() -> list[str]:
     """Get list of commonly used AWS regions for cost optimization."""
-    return get_common_regions_extended()
+    regions = get_common_regions_extended()
+    return regions
 
 
 __all__ = [

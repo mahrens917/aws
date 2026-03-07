@@ -16,7 +16,8 @@ from duplicate_tree.core import (
     DuplicateCluster,
     find_exact_duplicates,
 )
-from duplicate_tree_models import (
+
+from .models import (
     FilesTableReadError,
     PathTuple,
     ProgressPrinter,

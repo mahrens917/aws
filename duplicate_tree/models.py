@@ -1,4 +1,4 @@
-"""Shared data models for duplicate_tree_report."""
+"""Shared data models for duplicate tree analysis."""
 
 from __future__ import annotations
 

@@ -19,7 +19,7 @@ from duplicate_tree.cache import (
     store_cached_report,
 )
 from duplicate_tree.core import DuplicateCluster
-from duplicate_tree_models import DirectoryNode
+from duplicate_tree.models import DirectoryNode
 
 
 def test_ensure_cache_table_idempotent(tmp_path):

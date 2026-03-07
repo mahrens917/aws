@@ -1,4 +1,4 @@
-"""Tests for cost_toolkit/scripts/optimization/snapshot_export_fixed/export_ops.py"""
+"""Tests for snapshot export fixed operations."""
 
 from __future__ import annotations
 
@@ -11,8 +11,7 @@ from cost_toolkit.scripts.optimization.snapshot_export_common import (
 from cost_toolkit.scripts.optimization.snapshot_export_fixed.constants import (
     ExportTaskDeletedException,
 )
-from cost_toolkit.scripts.optimization.snapshot_export_fixed.export_ops import (
-    create_s3_bucket_new,
+from cost_toolkit.scripts.optimization.snapshot_export_fixed.export_helpers import (
     validate_export_task_exists,
 )
 from tests.assertions import assert_equal
@@ -27,17 +26,6 @@ def test_create_s3_bucket_if_not_exists():
 
     assert_equal(result, True)
     mock_s3.head_bucket.assert_called_once_with(Bucket="test-bucket")
-
-
-def test_create_s3_bucket_new():
-    """Test create_s3_bucket_new creates a new bucket."""
-    mock_s3 = MagicMock()
-
-    with patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.export_ops.create_s3_bucket_with_region") as mock_create:
-        result = create_s3_bucket_new(mock_s3, "new-bucket", "us-west-2")
-
-        assert_equal(result, True)
-        mock_create.assert_called_once_with(mock_s3, "new-bucket", "us-west-2")
 
 
 def test_create_ami_from_snapshot():

@@ -71,7 +71,8 @@ def print_verification_success_messages():
 
 def get_utc_now() -> str:
     """Get current UTC timestamp as ISO format string"""
-    return datetime.now(timezone.utc).isoformat()
+    now = datetime.now(timezone.utc)
+    return now.isoformat()
 
 
 def calculate_eta_bytes(elapsed: float, bytes_processed: int, total_bytes: int) -> str:

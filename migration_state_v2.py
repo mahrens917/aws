@@ -12,9 +12,9 @@ from migration_state_managers import (
     BucketVerificationResult,
     FileMetadata,
     FileStateManager,
+    Phase,
     PhaseManager,
 )
-from migration_types import Phase
 
 
 class BucketStatus:

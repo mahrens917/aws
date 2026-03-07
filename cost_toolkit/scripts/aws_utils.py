@@ -61,13 +61,9 @@ def setup_aws_credentials(env_path: Optional[str] = None):
 
 
 def get_aws_regions():
-    """
-    Get list of all AWS regions.
-
-    Returns:
-        list: List of AWS region names
-    """
-    return get_all_aws_regions()
+    """Get list of all AWS regions."""
+    regions = get_all_aws_regions()
+    return regions
 
 
 def get_instance_info(instance_id: str, region_name: str) -> dict:

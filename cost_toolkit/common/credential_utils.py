@@ -28,7 +28,8 @@ def setup_aws_credentials(env_path=None):
     Raises:
         ValueError: If AWS credentials are not found in .env file
     """
-    return load_credentials_from_env(env_path)
+    creds = load_credentials_from_env(env_path)
+    return creds
 
 
 def check_aws_credentials():

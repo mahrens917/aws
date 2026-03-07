@@ -40,7 +40,8 @@ COMPLETE_BUCKET_SIZE = 50_000
 @pytest.fixture
 def bucket_mgr(db_conn):
     """Create BucketStateManager instance"""
-    return BucketStateManager(db_conn)
+    mgr = BucketStateManager(db_conn)
+    return mgr
 
 
 class TestGetAllBuckets:

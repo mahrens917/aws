@@ -15,7 +15,6 @@ from .constants import (
     ExportTaskFailedException,
     ExportTaskStuckException,
 )
-from .export_ops import validate_export_task_exists
 from .monitoring import check_s3_file_completion
 
 _WAIT_EVENT = Event()
@@ -74,6 +73,15 @@ def _handle_task_deletion_recovery(s3_client, bucket_name, s3_key, snapshot_size
         msg = f"Export task deleted and no valid S3 file found: {s3_error}"
         raise ExportTaskDeletedException(msg) from s3_error
     return True, s3_key
+
+
+def validate_export_task_exists(ec2_client, export_task_id):
+    """Validate that export task still exists - raise exception if deleted."""
+    response = ec2_client.describe_export_image_tasks(ExportImageTaskIds=[export_task_id])
+    if not response["ExportImageTasks"]:
+        msg = f"Export task {export_task_id} no longer exists - was deleted"
+        raise ExportTaskDeletedException(msg)
+    return response["ExportImageTasks"][0]
 
 
 def _fetch_export_task_status(ec2_client, export_task_id):

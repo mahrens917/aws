@@ -27,7 +27,8 @@ def fixture_s3_client():
 @pytest.fixture(name="ec2_client")
 def fixture_ec2_client():
     """Create a mock EC2 client."""
-    return MagicMock()
+    client = MagicMock()
+    return client
 
 
 def test_cleanup_temporary_ami_success(ec2_client, capsys):

@@ -18,7 +18,8 @@ from tests.assertions import assert_equal
 @pytest.fixture
 def phase_mgr(db_conn):
     """Create PhaseManager instance"""
-    return PhaseManager(db_conn)
+    mgr = PhaseManager(db_conn)
+    return mgr
 
 
 def testphase_manager_initialization_sets_scanning(db_conn):
@@ -92,7 +93,8 @@ def testphase_manager_multiple_set_operations(phase_mgr):
 @pytest.fixture
 def migration_state(temp_db):
     """Create MigrationStateV2 instance"""
-    return MigrationStateV2(temp_db)
+    state = MigrationStateV2(temp_db)
+    return state
 
 
 def test_full_migration_workflow(migration_state):

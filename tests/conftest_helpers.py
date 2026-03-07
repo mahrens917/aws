@@ -200,7 +200,8 @@ def s3_paginator_response():
 @pytest.fixture
 def s3_mock():
     """Create mock S3 client for migration scanner tests"""
-    return mock.Mock()
+    client = mock.Mock()
+    return client
 
 
 @pytest.fixture

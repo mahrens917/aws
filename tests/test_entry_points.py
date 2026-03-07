@@ -1,6 +1,6 @@
 """Tests for CLI entry point modules."""
 
-import duplicate_tree_cli_exports
+import duplicate_tree
 from cost_toolkit import cost_overview
 from cost_toolkit.scripts import config
 from cost_toolkit.scripts.audit import (
@@ -50,11 +50,11 @@ def test_config_imports():
     assert config is not None
 
 
-def test_duplicate_tree_cli_exports_imports():
-    """Test that duplicate_tree_cli_exports module can be imported."""
-    assert duplicate_tree_cli_exports is not None
-    assert hasattr(duplicate_tree_cli_exports, "__all__")
-    assert "main" in duplicate_tree_cli_exports.__all__
+def test_duplicate_tree_imports():
+    """Test that duplicate_tree package exposes its public API."""
+    assert duplicate_tree is not None
+    assert hasattr(duplicate_tree, "__all__")
+    assert "main" in duplicate_tree.__all__
 
 
 def test_aws_vmimport_role_setup_imports():

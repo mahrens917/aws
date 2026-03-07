@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from migration_state_v2 import MigrationStateV2
 
 
-def _load_expected_file_map(state: "MigrationStateV2", bucket: str) -> Dict[str, Dict]:
+def load_expected_files(state: "MigrationStateV2", bucket: str) -> Dict[str, Dict]:
     print("  Loading file metadata from database...")
     expected_file_map: Dict[str, Dict] = {}
     with state.db_conn.get_connection() as conn:
@@ -32,7 +32,7 @@ def _load_expected_file_map(state: "MigrationStateV2", bucket: str) -> Dict[str,
     return expected_file_map
 
 
-def _scan_local_directory(base_path: Path, bucket: str, expected_files: int) -> Dict[str, Path]:
+def scan_local_files(base_path: Path, bucket: str, expected_files: int) -> Dict[str, Path]:
     print("  Scanning local files...")
     local_path = base_path / bucket
     local_files: Dict[str, Path] = {}
@@ -78,7 +78,7 @@ def _inventory_error_messages(missing_files: Set[str], extra_files: Set[str]) ->
     return errors
 
 
-def _validate_inventory(expected_keys: Set[str], local_keys: Set[str]) -> List[str]:
+def check_inventory(expected_keys: Set[str], local_keys: Set[str]) -> List[str]:
     print("  Checking file inventory...")
     missing_files, extra_files, ignored_count = _partition_inventory(expected_keys, local_keys)
     if ignored_count > 0:
@@ -92,21 +92,6 @@ def _validate_inventory(expected_keys: Set[str], local_keys: Set[str]) -> List[s
         msg = f"File inventory check failed: {len(missing_files)} missing, {len(extra_files)} extra"
         raise ValueError(msg)
     return errors
-
-
-def load_expected_files(state: "MigrationStateV2", bucket: str) -> Dict[str, Dict]:
-    """Load expected file metadata for the requested bucket."""
-    return _load_expected_file_map(state, bucket)
-
-
-def scan_local_files(base_path: Path, bucket: str, expected_files: int) -> Dict[str, Path]:
-    """Scan the on-disk directory for the bucket and return discovered files."""
-    return _scan_local_directory(base_path, bucket, expected_files)
-
-
-def check_inventory(expected_keys: Set[str], local_keys: Set[str]) -> List[str]:
-    """Compare inventory results and raise when they differ."""
-    return _validate_inventory(expected_keys, local_keys)
 
 
 __all__ = ["check_inventory", "load_expected_files", "scan_local_files"]

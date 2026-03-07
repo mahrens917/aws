@@ -54,7 +54,8 @@ def fixture_mock_print(monkeypatch):
 @pytest.fixture
 def db_conn(temp_db):
     """Return a DatabaseConnection bound to the temporary path."""
-    return DatabaseConnection(temp_db)
+    conn = DatabaseConnection(temp_db)
+    return conn
 
 
 @pytest.fixture(name="mock_dependencies")

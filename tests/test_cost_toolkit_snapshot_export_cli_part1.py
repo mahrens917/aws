@@ -37,7 +37,7 @@ def test_setup_aws_clients(mock_create_clients):
 
 # Tests for _setup_s3_bucket_for_export
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.setup_s3_bucket_versioning")
-@patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.create_s3_bucket_new")
+@patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.create_s3_bucket_with_region")
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.create_s3_bucket_if_not_exists")
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.check_existing_completed_exports")
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.datetime")
@@ -47,7 +47,7 @@ def test_setup_s3_bucket_for_export_existing_bucket(
     mock_datetime,
     mock_check_exports,
     mock_create_if_not_exists,
-    _mock_create_new,
+    _mock_create_with_region,
     mock_setup_versioning,
 ):
     """Test _setup_s3_bucket_for_export when bucket already exists."""
@@ -65,7 +65,7 @@ def test_setup_s3_bucket_for_export_existing_bucket(
 
 
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.setup_s3_bucket_versioning")
-@patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.create_s3_bucket_new")
+@patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.create_s3_bucket_with_region")
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.create_s3_bucket_if_not_exists")
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.check_existing_completed_exports")
 @patch("cost_toolkit.scripts.optimization.snapshot_export_fixed.cli.datetime")
@@ -75,7 +75,7 @@ def test_setup_s3_bucket_for_export_creates_new_bucket(
     mock_datetime,
     mock_check_exports,
     mock_create_if_not_exists,
-    mock_create_new,
+    mock_create_with_region,
     mock_setup_versioning,
 ):
     """Test _setup_s3_bucket_for_export when bucket needs to be created."""
@@ -88,7 +88,7 @@ def test_setup_s3_bucket_for_export_creates_new_bucket(
     bucket_name = _setup_s3_bucket_for_export(mock_s3, "eu-west-1")
 
     assert_equal(bucket_name, "ebs-snapshot-archive-eu-west-1-20250114")
-    mock_create_new.assert_called_once_with(mock_s3, "ebs-snapshot-archive-eu-west-1-20250114", "eu-west-1")
+    mock_create_with_region.assert_called_once_with(mock_s3, "ebs-snapshot-archive-eu-west-1-20250114", "eu-west-1")
     mock_setup_versioning.assert_called_once()
 
 

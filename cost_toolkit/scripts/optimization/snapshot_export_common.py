@@ -13,8 +13,9 @@ from cost_toolkit.common.waiter_utils import wait_ami_available
 
 
 def wait_for_ami_available(ec2_client, ami_id, delay=30, max_attempts=40):
-    """Wrapper used for test overrides while delegating to the canonical waiter."""
-    return wait_ami_available(ec2_client, ami_id, delay=delay, max_attempts=max_attempts)
+    """Canonical waiter for AMI availability."""
+    result = wait_ami_available(ec2_client, ami_id, delay=delay, max_attempts=max_attempts)
+    return result
 
 
 def create_s3_bucket_if_not_exists(s3_client, bucket_name, region, enable_versioning=True):

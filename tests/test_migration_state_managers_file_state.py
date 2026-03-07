@@ -13,7 +13,8 @@ from tests.assertions import assert_equal
 @pytest.fixture
 def file_mgr(db_conn):
     """Create FileStateManager instance"""
-    return FileStateManager(db_conn)
+    mgr = FileStateManager(db_conn)
+    return mgr
 
 
 def test_add_file_inserts_file_record(file_mgr, db_conn):

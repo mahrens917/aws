@@ -14,7 +14,6 @@ from .constants import (
     S3FileValidationException,
 )
 from .export_helpers import export_ami_to_s3_with_recovery
-from .export_ops import create_s3_bucket_new
 from .monitoring import check_s3_file_completion, verify_s3_export_final
 from .recovery import cleanup_temporary_ami
 
@@ -25,7 +24,6 @@ __all__ = [
     "S3FileValidationException",
     "create_ami_from_snapshot",
     "create_s3_bucket_if_not_exists",
-    "create_s3_bucket_new",
     "export_ami_to_s3_with_recovery",
     "setup_aws_credentials",
     "setup_s3_bucket_versioning",

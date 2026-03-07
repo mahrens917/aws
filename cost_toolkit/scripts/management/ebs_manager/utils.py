@@ -3,7 +3,7 @@ AWS EBS Volume Utility Functions Module
 Contains helper functions for region discovery and tag management.
 """
 
-from typing import Dict, Optional
+from typing import Optional
 
 import boto3
 
@@ -52,7 +52,8 @@ def get_instance_name_by_region(instance_id: str, region: str) -> Optional[str]:
 
 def _get_instance_name_with_client(ec2_client, instance_id: str) -> Optional[str]:
     """Internal helper to allow mocking the underlying name lookup."""
-    return _aws_common_get_instance_name(ec2_client, instance_id)
+    name = _aws_common_get_instance_name(ec2_client, instance_id)
+    return name
 
 
 def get_instance_name(instance_id: str, region: str) -> Optional[str]:
@@ -61,15 +62,4 @@ def get_instance_name(instance_id: str, region: str) -> Optional[str]:
     return _get_instance_name_with_client(ec2_client, instance_id)
 
 
-def get_volume_tags(volume: Dict) -> Dict[str, str]:
-    """
-    Extract tags from a volume description.
-    Delegates to canonical implementation in aws_common.
-
-    Args:
-        volume: Volume description from AWS API
-
-    Returns:
-        Dictionary of tag key-value pairs
-    """
-    return get_resource_tags(volume)
+get_volume_tags = get_resource_tags

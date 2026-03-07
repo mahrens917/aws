@@ -2,10 +2,22 @@
 
 import sqlite3
 from dataclasses import dataclass
+from enum import Enum
 from importlib import import_module
 from typing import TYPE_CHECKING, Dict, List, Optional
 
-from migration_types import Phase
+
+class Phase(Enum):
+    """Migration phases"""
+
+    SCANNING = "scanning"
+    GLACIER_RESTORE = "glacier_restore"
+    GLACIER_WAIT = "glacier_wait"
+    SYNCING = "syncing"
+    VERIFYING = "verifying"
+    DELETING = "deleting"
+    COMPLETE = "complete"
+
 
 _PACKAGE_PREFIX = f"{__package__}." if __package__ else ""
 get_utc_now = import_module(f"{_PACKAGE_PREFIX}migration_utils").get_utc_now
