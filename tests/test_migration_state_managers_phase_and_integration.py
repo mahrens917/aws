@@ -25,30 +25,30 @@ def phase_mgr(db_conn):
 def testphase_manager_initialization_sets_scanning(db_conn):
     """Test that new PhaseManager initializes to SCANNING phase"""
     pm = PhaseManager(db_conn)
-    phase = pm.get_phase()
+    phase = pm.get_current_phase()
 
     assert phase == Phase.SCANNING
 
 
 def test_set_phase_and_get_phase(phase_mgr):
     """Test setting and getting phases"""
-    phase_mgr.set_phase(Phase.GLACIER_RESTORE)
-    assert phase_mgr.get_phase() == Phase.GLACIER_RESTORE
+    phase_mgr.set_current_phase(Phase.GLACIER_RESTORE)
+    assert phase_mgr.get_current_phase() == Phase.GLACIER_RESTORE
 
-    phase_mgr.set_phase(Phase.GLACIER_WAIT)
-    assert phase_mgr.get_phase() == Phase.GLACIER_WAIT
+    phase_mgr.set_current_phase(Phase.GLACIER_WAIT)
+    assert phase_mgr.get_current_phase() == Phase.GLACIER_WAIT
 
-    phase_mgr.set_phase(Phase.SYNCING)
-    assert phase_mgr.get_phase() == Phase.SYNCING
+    phase_mgr.set_current_phase(Phase.SYNCING)
+    assert phase_mgr.get_current_phase() == Phase.SYNCING
 
-    phase_mgr.set_phase(Phase.VERIFYING)
-    assert phase_mgr.get_phase() == Phase.VERIFYING
+    phase_mgr.set_current_phase(Phase.VERIFYING)
+    assert phase_mgr.get_current_phase() == Phase.VERIFYING
 
-    phase_mgr.set_phase(Phase.DELETING)
-    assert phase_mgr.get_phase() == Phase.DELETING
+    phase_mgr.set_current_phase(Phase.DELETING)
+    assert phase_mgr.get_current_phase() == Phase.DELETING
 
-    phase_mgr.set_phase(Phase.COMPLETE)
-    assert phase_mgr.get_phase() == Phase.COMPLETE
+    phase_mgr.set_current_phase(Phase.COMPLETE)
+    assert phase_mgr.get_current_phase() == Phase.COMPLETE
 
 
 class TestPhasePersistence:
@@ -57,14 +57,14 @@ class TestPhasePersistence:
     def test_phase_persistence_across_instances(self, db_conn):
         """Test that phase is persisted and can be retrieved by new instance"""
         phase_manager1 = PhaseManager(db_conn)
-        phase_manager1.set_phase(Phase.GLACIER_RESTORE)
+        phase_manager1.set_current_phase(Phase.GLACIER_RESTORE)
 
         phase_manager2 = PhaseManager(db_conn)
-        assert phase_manager2.get_phase() == Phase.GLACIER_RESTORE
+        assert phase_manager2.get_current_phase() == Phase.GLACIER_RESTORE
 
     def test_phase_updates_are_persisted(self, phase_mgr, db_conn):
         """Test that phase updates are stored in database"""
-        phase_mgr.set_phase(Phase.SYNCING)
+        phase_mgr.set_current_phase(Phase.SYNCING)
 
         with db_conn.get_connection() as conn:
             row = conn.execute("SELECT value FROM migration_metadata WHERE key = 'current_phase'").fetchone()
@@ -74,7 +74,7 @@ class TestPhasePersistence:
 
 def test_get_phase_returns_phase_enum(phase_mgr):
     """Test that get_phase returns Phase enum type"""
-    phase = phase_mgr.get_phase()
+    phase = phase_mgr.get_current_phase()
 
     assert isinstance(phase, Phase)
     assert phase in Phase
@@ -85,8 +85,8 @@ def testphase_manager_multiple_set_operations(phase_mgr):
     phases = list(Phase)
 
     for phase in phases:
-        phase_mgr.set_phase(phase)
-        assert phase_mgr.get_phase() == phase
+        phase_mgr.set_current_phase(phase)
+        assert phase_mgr.get_current_phase() == phase
 
 
 # Shared fixtures for integration tests

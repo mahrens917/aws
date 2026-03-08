@@ -147,38 +147,14 @@ class DatabaseConnection:
                 raise
 
 
-class _BucketOperationsMixin:
-    """Common bucket operations delegated to BucketStateManager."""
+class MigrationStateV2(FileStateManager, BucketStateManager, PhaseManager):
+    """Migration state management combining file, bucket, and phase operations"""
 
-    buckets: "BucketStateManager"
-
-    def save_bucket_status(self, status: "BucketScanStatus"):
-        """Persist bucket scan counts and totals."""
-        return self.buckets.save_bucket_status(status)
-
-    def mark_bucket_sync_complete(self, bucket: str):
-        """Flag that bucket sync finished."""
-        return self.buckets.mark_bucket_sync_complete(bucket)
-
-    def mark_bucket_verify_complete(self, verification: "BucketVerificationResult"):
-        """Pass verification metrics through to the bucket state manager."""
-        return self.buckets.mark_bucket_verify_complete(verification)
-
-    def mark_bucket_delete_complete(self, bucket: str):
-        """Flag that a bucket was deleted."""
-        return self.buckets.mark_bucket_delete_complete(bucket)
-
-    def get_all_buckets(self) -> List[str]:
-        """Return every bucket tracked in the database."""
-        return self.buckets.get_all_buckets()
-
-    def get_completed_buckets_for_phase(self, phase_field: str) -> List[str]:
-        """Return buckets that completed a requested boolean phase field."""
-        return self.buckets.get_completed_buckets_for_phase(phase_field)
-
-    def get_bucket_info(self, bucket: str) -> Dict:
-        """Fetch the stored status row for *bucket*."""
-        return self.buckets.get_bucket_info(bucket)
+    def __init__(self, db_path: str):
+        db_conn = DatabaseConnection(db_path)
+        FileStateManager.__init__(self, db_conn)
+        BucketStateManager.__init__(self, db_conn)
+        PhaseManager.__init__(self, db_conn)
 
     def get_bucket_status(self, bucket: str) -> "BucketStatus":
         """Fetch bucket status as a typed object; fail fast if missing."""
@@ -186,45 +162,3 @@ class _BucketOperationsMixin:
         if not info:
             raise ValueError(f"Bucket '{bucket}' not found in migration state")
         return BucketStatus(info)
-
-    def get_scan_summary(self) -> Dict:
-        """Return high level statistics for scanned buckets."""
-        return self.buckets.get_scan_summary()
-
-
-class MigrationStateV2(_BucketOperationsMixin):
-    """Migration state management delegating to specialized managers"""
-
-    def __init__(self, db_path: str):
-        self.db_conn = DatabaseConnection(db_path)
-        self.files = FileStateManager(self.db_conn)
-        self.buckets = BucketStateManager(self.db_conn)
-        self.phases = PhaseManager(self.db_conn)
-
-    def add_file(self, metadata: "FileMetadata"):
-        """Record metadata for a discovered object."""
-        return self.files.add_file(metadata)
-
-    def mark_glacier_restore_requested(self, bucket: str, key: str):
-        """Track that a Glacier restore request has been issued."""
-        return self.files.mark_glacier_restore_requested(bucket, key)
-
-    def mark_glacier_restored(self, bucket: str, key: str):
-        """Mark that a Glacier object finished restoration."""
-        return self.files.mark_glacier_restored(bucket, key)
-
-    def get_glacier_files_needing_restore(self) -> List[Dict]:
-        """Return Glacier objects still waiting on restore requests."""
-        return self.files.get_glacier_files_needing_restore()
-
-    def get_files_restoring(self) -> List[Dict]:
-        """Return Glacier objects currently restoring."""
-        return self.files.get_files_restoring()
-
-    def get_current_phase(self) -> Phase:
-        """Return the enum value representing the current phase."""
-        return self.phases.get_phase()
-
-    def set_current_phase(self, phase: Phase):
-        """Persist the new active migration phase."""
-        return self.phases.set_phase(phase)

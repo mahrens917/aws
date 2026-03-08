@@ -293,9 +293,9 @@ class PhaseManager:
         with self.db_conn.get_connection() as conn:
             cursor = conn.execute("SELECT value FROM migration_metadata WHERE key = 'current_phase'")
             if not cursor.fetchone():
-                self.set_phase(Phase.SCANNING)
+                self.set_current_phase(Phase.SCANNING)
 
-    def get_phase(self) -> "Phase":
+    def get_current_phase(self) -> "Phase":
         """Get current migration phase"""
         with self.db_conn.get_connection() as conn:
             cursor = conn.execute("SELECT value FROM migration_metadata WHERE key = 'current_phase'")
@@ -304,7 +304,7 @@ class PhaseManager:
                 raise RuntimeError("Migration phase metadata is missing. Reset the state DB to avoid resuming from an unknown phase.")
             return Phase(row["value"])
 
-    def set_phase(self, phase: "Phase"):
+    def set_current_phase(self, phase: "Phase"):
         """Set current migration phase"""
         now = get_utc_now()
         with self.db_conn.get_connection() as conn:

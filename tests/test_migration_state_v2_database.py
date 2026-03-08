@@ -178,4 +178,4 @@ def test_phase_manager_raises_when_phase_missing(tmp_path: Path):
         conn.commit()
 
     with pytest.raises(RuntimeError):
-        phase_manager.get_phase()
+        phase_manager.get_current_phase()

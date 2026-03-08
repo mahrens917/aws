@@ -8,18 +8,18 @@ from tests.assertions import assert_equal
 
 
 def test_migration_state_v2_initialization(tmp_path: Path):
-    """MigrationStateV2 initializes with database and managers."""
+    """MigrationStateV2 initializes with database connection and all operations."""
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
     assert isinstance(state.db_conn, DatabaseConnection)
-    assert hasattr(state, "files")
-    assert hasattr(state, "buckets")
-    assert hasattr(state, "phases")
+    assert hasattr(state, "add_file")
+    assert hasattr(state, "save_bucket_status")
+    assert hasattr(state, "get_current_phase")
 
 
 def test_migration_state_v2_add_file(tmp_path: Path):
-    """MigrationStateV2.add_file delegates to FileStateManager."""
+    """MigrationStateV2.add_file persists file metadata."""
     db_path = tmp_path / "test.db"
     state = MigrationStateV2(str(db_path))
 
