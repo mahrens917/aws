@@ -1,7 +1,7 @@
 """Tests for CLI entry point modules."""
 
 import duplicate_tree
-from cost_toolkit import cost_overview
+from cost_toolkit.overview import cli as cost_overview_cli
 from cost_toolkit.scripts import config
 from cost_toolkit.scripts.audit import (
     aws_ami_snapshot_analysis,
@@ -41,8 +41,9 @@ from cost_toolkit.scripts.setup import aws_vmimport_role_setup
 
 
 def test_cost_overview_imports():
-    """Test that cost_overview module can be imported."""
-    assert cost_overview is not None
+    """Test that cost_overview CLI module can be imported."""
+    assert cost_overview_cli is not None
+    assert hasattr(cost_overview_cli, "main")
 
 
 def test_config_imports():

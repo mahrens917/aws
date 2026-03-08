@@ -6,7 +6,7 @@ A consolidated home for every non-embedding artifact from `~/aws_cost`, now vend
 
 ```
 cost_toolkit/
-├── cost_overview.py          # High-level cost+opportunity report
+├── overview/                 # High-level cost+opportunity report (CLI entry: overview/cli.py)
 ├── requirements.txt          # Python dependencies for the toolkit
 ├── setup_environment.sh      # Optional helper to create venv locally
 ├── config/requirements.txt   # Historical dep list (kept for reference)
@@ -41,7 +41,7 @@ Every module still keeps its original relative imports, so running a script from
 
 3. **Cost Overview** – Generate a service-level spend summary plus optimization hints:
    ```bash
-   python cost_toolkit/cost_overview.py
+   python -m cost_toolkit.overview.cli
    ```
 
 4. **Billing Reports** – Use the Cost Explorer pullers:

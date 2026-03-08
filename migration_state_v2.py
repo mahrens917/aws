@@ -147,32 +147,6 @@ class DatabaseConnection:
                 raise
 
 
-class _FileOperationsMixin:
-    """Common file operations delegated to FileStateManager."""
-
-    files: "FileStateManager"
-
-    def add_file(self, metadata: "FileMetadata"):
-        """Record metadata for a discovered object."""
-        return self.files.add_file(metadata)
-
-    def mark_glacier_restore_requested(self, bucket: str, key: str):
-        """Track that a Glacier restore request has been issued."""
-        return self.files.mark_glacier_restore_requested(bucket, key)
-
-    def mark_glacier_restored(self, bucket: str, key: str):
-        """Mark that a Glacier object finished restoration."""
-        return self.files.mark_glacier_restored(bucket, key)
-
-    def get_glacier_files_needing_restore(self) -> List[Dict]:
-        """Return Glacier objects still waiting on restore requests."""
-        return self.files.get_glacier_files_needing_restore()
-
-    def get_files_restoring(self) -> List[Dict]:
-        """Return Glacier objects currently restoring."""
-        return self.files.get_files_restoring()
-
-
 class _BucketOperationsMixin:
     """Common bucket operations delegated to BucketStateManager."""
 
@@ -218,10 +192,34 @@ class _BucketOperationsMixin:
         return self.buckets.get_scan_summary()
 
 
-class _PhaseOperationsMixin:
-    """Common phase operations delegated to PhaseManager."""
+class MigrationStateV2(_BucketOperationsMixin):
+    """Migration state management delegating to specialized managers"""
 
-    phases: "PhaseManager"
+    def __init__(self, db_path: str):
+        self.db_conn = DatabaseConnection(db_path)
+        self.files = FileStateManager(self.db_conn)
+        self.buckets = BucketStateManager(self.db_conn)
+        self.phases = PhaseManager(self.db_conn)
+
+    def add_file(self, metadata: "FileMetadata"):
+        """Record metadata for a discovered object."""
+        return self.files.add_file(metadata)
+
+    def mark_glacier_restore_requested(self, bucket: str, key: str):
+        """Track that a Glacier restore request has been issued."""
+        return self.files.mark_glacier_restore_requested(bucket, key)
+
+    def mark_glacier_restored(self, bucket: str, key: str):
+        """Mark that a Glacier object finished restoration."""
+        return self.files.mark_glacier_restored(bucket, key)
+
+    def get_glacier_files_needing_restore(self) -> List[Dict]:
+        """Return Glacier objects still waiting on restore requests."""
+        return self.files.get_glacier_files_needing_restore()
+
+    def get_files_restoring(self) -> List[Dict]:
+        """Return Glacier objects currently restoring."""
+        return self.files.get_files_restoring()
 
     def get_current_phase(self) -> Phase:
         """Return the enum value representing the current phase."""
@@ -230,13 +228,3 @@ class _PhaseOperationsMixin:
     def set_current_phase(self, phase: Phase):
         """Persist the new active migration phase."""
         return self.phases.set_phase(phase)
-
-
-class MigrationStateV2(_FileOperationsMixin, _BucketOperationsMixin, _PhaseOperationsMixin):
-    """Migration state management delegating to specialized managers"""
-
-    def __init__(self, db_path: str):
-        self.db_conn = DatabaseConnection(db_path)
-        self.files = FileStateManager(self.db_conn)
-        self.buckets = BucketStateManager(self.db_conn)
-        self.phases = PhaseManager(self.db_conn)
