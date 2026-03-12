@@ -39,10 +39,7 @@ def _load_shared_package(shared_ci_tools: Path) -> ModuleType:
     """Load ci_tools from the canonical shared checkout."""
     shared_init = shared_ci_tools / "__init__.py"
     if not shared_init.exists():
-        msg = (
-            f"Shared ci_tools package missing at {shared_init}. "
-            "Clone ci_shared and/or set CI_SHARED_ROOT."
-        )
+        msg = f"Shared ci_tools package missing at {shared_init}. " "Clone ci_shared and/or set CI_SHARED_ROOT."
         raise SharedPackageMissingError(msg)
 
     spec = importlib.util.spec_from_file_location("ci_tools", shared_init)
@@ -69,10 +66,7 @@ def _bootstrap_shared_ci_tools() -> None:
         return
 
     if not shared_ci_tools.exists():
-        msg = (
-            f"Shared ci_tools directory not found at {shared_ci_tools}. "
-            "Ensure ci_shared is cloned locally or set CI_SHARED_ROOT."
-        )
+        msg = f"Shared ci_tools directory not found at {shared_ci_tools}. " "Ensure ci_shared is cloned locally or set CI_SHARED_ROOT."
         raise SharedDirectoryNotFoundError(msg)
 
     shared_path = shared_ci_tools.as_posix()
