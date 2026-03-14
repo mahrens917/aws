@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Audit EC2 instance usage patterns."""
 
-
 from datetime import datetime, timedelta, timezone
 
 from botocore.exceptions import ClientError

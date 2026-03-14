@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Fix RDS subnet routing configuration."""
 
-
 import boto3
 from botocore.exceptions import ClientError
 

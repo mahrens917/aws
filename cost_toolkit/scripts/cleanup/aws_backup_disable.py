@@ -4,7 +4,6 @@ AWS Backup Disable Script
 Safely disables all automated backup services while preserving existing data.
 """
 
-
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_client

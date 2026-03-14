@@ -22,14 +22,12 @@ def list_schemas(cursor):
         cursor: psycopg2 cursor object
     """
     print("\n📁 USER SCHEMAS:")
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT schema_name
         FROM information_schema.schemata
         WHERE schema_name NOT IN ('information_schema', 'pg_catalog', 'pg_toast')
         ORDER BY schema_name;
-    """
-    )
+    """)
     schemas = cursor.fetchall()
     for schema in schemas:
         print(f"   • {schema[0]}")
@@ -45,14 +43,12 @@ def list_tables(cursor):
         List of tuples containing (schema_name, table_name, owner)
     """
     print("\n📋 USER TABLES:")
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT schemaname, tablename, tableowner
         FROM pg_tables
         WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
         ORDER BY schemaname, tablename;
-    """
-    )
+    """)
     tables = cursor.fetchall()
 
     if tables:
@@ -71,14 +67,12 @@ def list_views(cursor):
         cursor: psycopg2 cursor object
     """
     print("\n👁️  USER VIEWS:")
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT schemaname, viewname, viewowner
         FROM pg_views
         WHERE schemaname NOT IN ('information_schema', 'pg_catalog')
         ORDER BY schemaname, viewname;
-    """
-    )
+    """)
     views = cursor.fetchall()
 
     if views:
@@ -100,14 +94,12 @@ def get_table_columns(cursor, schema_name, table_name, max_display=5):
     Returns:
         List of tuples containing column information
     """
-    cursor.execute(
-        f"""
+    cursor.execute(f"""
         SELECT column_name, data_type, is_nullable, column_default
         FROM information_schema.columns
         WHERE table_schema = '{schema_name}' AND table_name = '{table_name}'
         ORDER BY ordinal_position;
-    """
-    )
+    """)
     columns = cursor.fetchall()
     print(f"     Columns ({len(columns)}):")
     for col in columns[:max_display]:
@@ -175,14 +167,12 @@ def list_functions(cursor):
         cursor: psycopg2 cursor object
     """
     print("\n⚙️  USER FUNCTIONS:")
-    cursor.execute(
-        """
+    cursor.execute("""
         SELECT routine_schema, routine_name, routine_type
         FROM information_schema.routines
         WHERE routine_schema NOT IN ('information_schema', 'pg_catalog')
         ORDER BY routine_schema, routine_name;
-    """
-    )
+    """)
     functions = cursor.fetchall()
 
     if functions:

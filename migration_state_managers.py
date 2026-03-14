@@ -141,12 +141,10 @@ def get_storage_class_counts(conn) -> Dict[str, int]:
 
 def get_scan_summary_from_db(conn) -> Dict:
     """Get summary of scanned buckets"""
-    cursor = conn.execute(
-        """SELECT COUNT(*) as bucket_count,
+    cursor = conn.execute("""SELECT COUNT(*) as bucket_count,
         COALESCE(SUM(file_count), 0) as total_files,
         COALESCE(SUM(total_size), 0) as total_size
-        FROM bucket_status WHERE scan_complete = 1"""
-    )
+        FROM bucket_status WHERE scan_complete = 1""")
     row = cursor.fetchone()
     storage_classes = get_storage_class_counts(conn)
     return {
@@ -217,20 +215,16 @@ class FileStateManager:
     def get_glacier_files_needing_restore(self) -> List[Dict]:
         """Get Glacier files that need restore requests"""
         with self.db_conn.get_connection() as conn:
-            cursor = conn.execute(
-                """SELECT * FROM files WHERE storage_class IN ('GLACIER', 'DEEP_ARCHIVE')
-                AND glacier_restore_requested_at IS NULL"""
-            )
+            cursor = conn.execute("""SELECT * FROM files WHERE storage_class IN ('GLACIER', 'DEEP_ARCHIVE')
+                AND glacier_restore_requested_at IS NULL""")
             return [dict(row) for row in cursor.fetchall()]
 
     def get_files_restoring(self) -> List[Dict]:
         """Get files currently being restored"""
         with self.db_conn.get_connection() as conn:
-            cursor = conn.execute(
-                """SELECT * FROM files WHERE storage_class IN ('GLACIER', 'DEEP_ARCHIVE')
+            cursor = conn.execute("""SELECT * FROM files WHERE storage_class IN ('GLACIER', 'DEEP_ARCHIVE')
                 AND glacier_restore_requested_at IS NOT NULL
-                AND glacier_restored_at IS NULL"""
-            )
+                AND glacier_restored_at IS NULL""")
             return [dict(row) for row in cursor.fetchall()]
 
 

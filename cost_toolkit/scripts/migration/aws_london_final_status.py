@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Check final migration status for London region."""
 
-
 import boto3
 from botocore.exceptions import ClientError
 

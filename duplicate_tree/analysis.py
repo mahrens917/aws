@@ -51,14 +51,12 @@ def build_directory_index_from_db(db_path: str, progress_label: str = "Scanning 
             raise FilesTableReadError(db_path) from exc
         progress = ProgressPrinter(total_files, progress_label)
         start_time = time.time()
-        cursor = conn.execute(
-            """
+        cursor = conn.execute("""
             SELECT bucket, key, size,
                    COALESCE(local_checksum, etag, '') AS checksum
             FROM files
             ORDER BY bucket, key
-            """
-        )
+            """)
         processed = 0
         hasher = hashlib.sha256()
         try:

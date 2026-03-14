@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Audit VPC Flow Logs configuration."""
 
-
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_client

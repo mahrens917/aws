@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Migrate EBS data to S3 storage."""
 
-
 import os
 
 import boto3

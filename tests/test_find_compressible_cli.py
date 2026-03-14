@@ -121,8 +121,7 @@ def test_main_with_missing_db(tmp_path):
 def _create_test_db(db_path: Path) -> None:
     """Create a test database with sample files."""
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -130,8 +129,7 @@ def _create_test_db(db_path: Path) -> None:
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     rows = [
         ("bucket1", "file1.txt", 600 * 1024 * 1024, "aaa", None),
         ("bucket2", "file2.log", 700 * 1024 * 1024, "bbb", None),

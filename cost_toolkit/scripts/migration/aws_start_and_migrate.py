@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Start and manage migration operations."""
 
-
 from threading import Event
 
 import boto3

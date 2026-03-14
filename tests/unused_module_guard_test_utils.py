@@ -32,8 +32,7 @@ def load_shim_module(isolate: bool = False):
             scripts_dir.mkdir(parents=True)
 
             guard_file = scripts_dir / "unused_module_guard.py"
-            guard_file.write_text(
-                """
+            guard_file.write_text("""
 SUSPICIOUS_PATTERNS = ()
 
 def find_unused_modules(root, exclude_patterns=None):
@@ -41,8 +40,7 @@ def find_unused_modules(root, exclude_patterns=None):
 
 def find_suspicious_duplicates(root):
     return []
-"""
-            )
+""")
 
             with patch.dict(os.environ, {"CI_SHARED_ROOT": str(shared_root)}):
                 spec = importlib.util.spec_from_file_location("_test_shim_isolated", shim_path)

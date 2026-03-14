@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Analyze EBS volumes in London region."""
 
-
 import boto3
 from botocore.exceptions import ClientError
 

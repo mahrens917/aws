@@ -4,7 +4,6 @@ AWS Snapshot Bulk Deletion Script
 Deletes multiple EBS snapshots across regions.
 """
 
-
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_client

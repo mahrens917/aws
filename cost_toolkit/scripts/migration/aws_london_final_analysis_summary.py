@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Generate final migration analysis summary."""
 
-
 import boto3
 from botocore.exceptions import ClientError
 

@@ -4,7 +4,6 @@ AWS EBS Post-Termination Audit
 Checks if EBS volumes from terminated instances were properly deleted
 """
 
-
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_client

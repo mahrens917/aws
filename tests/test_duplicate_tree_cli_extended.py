@@ -20,8 +20,7 @@ def _write_sample_db(tmp_path: Path) -> Path:
     """Create a sample database with duplicate directories."""
     db_path = tmp_path / "state.db"
     conn = sqlite3.connect(db_path)
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -29,8 +28,7 @@ def _write_sample_db(tmp_path: Path) -> Path:
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     large = 600 * 1024 * 1024  # 0.56 GiB
     rows = [
         ("bucket", "dirA/file1.txt", large, "aaa", None),
@@ -124,8 +122,7 @@ def test_main_with_delete_no_clusters(tmp_path, capsys):
     """Test main with delete flag but no duplicate clusters found."""
     db_path = tmp_path / "small.db"
     conn = sqlite3.connect(db_path)
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -133,8 +130,7 @@ def test_main_with_delete_no_clusters(tmp_path, capsys):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     # Small files that won't meet threshold
     rows = [
         ("bucket", "fileA.txt", 100, "aaa", None),

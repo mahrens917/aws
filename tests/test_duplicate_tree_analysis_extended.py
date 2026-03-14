@@ -29,8 +29,7 @@ def _create_test_db(tmp_path: Path, include_files_table: bool = True) -> Path:
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(db_path)
     if include_files_table:
-        conn.execute(
-            """
+        conn.execute("""
             CREATE TABLE files (
                 bucket TEXT NOT NULL,
                 key TEXT NOT NULL,
@@ -38,8 +37,7 @@ def _create_test_db(tmp_path: Path, include_files_table: bool = True) -> Path:
                 local_checksum TEXT,
                 etag TEXT
             )
-            """
-        )
+            """)
         rows = [
             ("bucket1", "dir1/file1.txt", 1000, "abc123", None),
             ("bucket1", "dir1/file2.txt", 2000, None, "def456"),

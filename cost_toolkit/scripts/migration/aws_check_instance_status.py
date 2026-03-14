@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Check EC2 instance status."""
 
-
 import base64
 
 import boto3

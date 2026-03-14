@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Fix RDS default subnet group configuration."""
 
-
 import boto3
 from botocore.exceptions import ClientError
 

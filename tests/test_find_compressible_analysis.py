@@ -122,8 +122,7 @@ def test_should_skip_by_suffix_multiple_names():
 def _create_test_db(db_path: Path) -> sqlite3.Connection:
     """Create a test database with sample files."""
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -131,8 +130,7 @@ def _create_test_db(db_path: Path) -> sqlite3.Connection:
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     rows = [
         ("bucket1", "small.txt", 100, "aaa", None),
         ("bucket1", "large.txt", 600 * 1024 * 1024, "bbb", None),
@@ -241,8 +239,7 @@ def test_find_candidates_skips_xz_files(tmp_path):
     """Test find_candidates skips .xz files."""
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -250,8 +247,7 @@ def test_find_candidates_skips_xz_files(tmp_path):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     # Add a .xz file - note it should NOT be skipped by suffix check
     # because .xz is NOT in ALREADY_COMPRESSED_EXTENSIONS, it's checked separately
     conn.execute(

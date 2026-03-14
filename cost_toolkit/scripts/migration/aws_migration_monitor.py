@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Monitor migration progress and status."""
 
-
 from datetime import datetime
 
 import boto3

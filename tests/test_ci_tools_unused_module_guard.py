@@ -132,8 +132,7 @@ def test_load_shared_guard_success(tmp_path: Path, monkeypatch: pytest.MonkeyPat
     scripts_dir = shared_root / "ci_tools" / "scripts"
     scripts_dir.mkdir(parents=True)
     guard_file = scripts_dir / "unused_module_guard.py"
-    guard_file.write_text(
-        """
+    guard_file.write_text("""
 SUSPICIOUS_PATTERNS = ("test",)
 
 def find_unused_modules(root, exclude_patterns=None):
@@ -144,8 +143,7 @@ def find_suspicious_duplicates(root):
 
 def main():
     return 0
-"""
-    )
+""")
 
     monkeypatch.setenv("CI_SHARED_ROOT", str(shared_root))
 

@@ -4,7 +4,6 @@ AWS CloudWatch Cleanup Script
 Removes canary runs and reduces CloudWatch monitoring to eliminate API requests and canary costs.
 """
 
-
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_client

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Verify Route53 domain ownership."""
 
-
 import boto3
 from botocore.exceptions import ClientError
 

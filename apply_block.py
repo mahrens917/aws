@@ -6,6 +6,7 @@ Usage:
     python apply_block.py bucket1 [bucket2 ...]  # Apply policies to specific buckets
     python apply_block.py --all                   # Apply policies to all buckets with policy files
 """
+
 import argparse
 import os
 

@@ -19,6 +19,7 @@ Usage:
     python migrate_v2.py status    # Show current status
     python migrate_v2.py reset     # Reset and start over
 """
+
 import argparse
 import shutil
 import signal

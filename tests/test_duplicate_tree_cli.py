@@ -16,8 +16,7 @@ MIN_DUPLICATE_DIRECTORIES = 2
 def _write_sample_db(tmp_path: Path) -> Path:
     db_path = tmp_path / "state.db"
     conn = sqlite3.connect(db_path)
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -25,8 +24,7 @@ def _write_sample_db(tmp_path: Path) -> Path:
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     large = 600 * 1024 * 1024  # 0.56 GiB
     rows = [
         ("bucket", "dirA/file1.txt", large, "aaa", None),
@@ -104,8 +102,7 @@ def test_threshold_filters_small_clusters(tmp_path, capsys):
     """Test that threshold filters out small clusters."""
     db_path = tmp_path / "small.db"
     conn = sqlite3.connect(db_path)
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -113,8 +110,7 @@ def test_threshold_filters_small_clusters(tmp_path, capsys):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     rows = [
         ("bucket", "tinyA/file1.txt", 10, "aaa", None),
         ("bucket", "tinyB/file1.txt", 10, "aaa", None),

@@ -7,6 +7,7 @@ Usage:
     python block_s3.py --all                   # Generate policies for all buckets
     python block_s3.py                         # Interactive mode
 """
+
 import argparse
 import os
 import sys

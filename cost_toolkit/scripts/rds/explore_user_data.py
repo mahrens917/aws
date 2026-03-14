@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Explore RDS user data and credentials."""
 
-
 import importlib
 import os
 from typing import Any

@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Inspect EBS volumes in London region."""
 
-
 from cost_toolkit.scripts import aws_utils
 
 # Command lists for system inspection

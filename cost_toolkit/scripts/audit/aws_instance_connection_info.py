@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Get EC2 instance connection information."""
 
-
 from botocore.exceptions import ClientError
 
 from cost_toolkit.common.aws_client_factory import create_client

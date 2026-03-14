@@ -12,8 +12,7 @@ from find_compressible.analysis import find_candidates
 def _create_test_db_with_edge_cases(db_path: Path) -> sqlite3.Connection:
     """Create a test database with edge case files."""
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -21,8 +20,7 @@ def _create_test_db_with_edge_cases(db_path: Path) -> sqlite3.Connection:
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     rows = [
         # Invalid path (null bytes, etc.)
         ("bucket1", "invalid\x00path.txt", 600 * 1024 * 1024, "aaa", None),
@@ -62,8 +60,7 @@ def test_find_candidates_with_directory_instead_of_file(tmp_path):
     """Test find_candidates skips directories."""
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -71,8 +68,7 @@ def test_find_candidates_with_directory_instead_of_file(tmp_path):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     conn.execute(
         "INSERT INTO files (bucket, key, size, local_checksum, etag) VALUES (?, ?, ?, ?, ?)",
         ("bucket1", "directory_item", 600 * 1024 * 1024, "aaa", None),
@@ -99,8 +95,7 @@ def test_find_candidates_file_shrunk_below_threshold(tmp_path):
     """Test find_candidates handles files that shrunk below threshold."""
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -108,8 +103,7 @@ def test_find_candidates_file_shrunk_below_threshold(tmp_path):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     # DB says file is large
     conn.execute(
         "INSERT INTO files (bucket, key, size, local_checksum, etag) VALUES (?, ?, ?, ?, ?)",
@@ -137,8 +131,7 @@ def test_find_candidates_xz_suffix_uppercase(tmp_path):
     """Test find_candidates skips files with uppercase .XZ extension."""
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -146,8 +139,7 @@ def test_find_candidates_xz_suffix_uppercase(tmp_path):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     conn.execute(
         "INSERT INTO files (bucket, key, size, local_checksum, etag) VALUES (?, ?, ?, ?, ?)",
         ("bucket1", "file.TXT.XZ", 600 * 1024 * 1024, "aaa", None),
@@ -176,8 +168,7 @@ def test_find_candidates_with_video_extension(tmp_path):
     """Test find_candidates skips video files correctly."""
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -185,8 +176,7 @@ def test_find_candidates_with_video_extension(tmp_path):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     conn.execute(
         "INSERT INTO files (bucket, key, size, local_checksum, etag) VALUES (?, ?, ?, ?, ?)",
         ("bucket1", "movie.mov", 700 * 1024 * 1024, "aaa", None),
@@ -212,8 +202,7 @@ def test_find_candidates_with_numeric_extension(tmp_path):
     """Test find_candidates skips files with numeric extensions."""
     db_path = tmp_path / "test.db"
     conn = sqlite3.connect(str(db_path))
-    conn.execute(
-        """
+    conn.execute("""
         CREATE TABLE files (
             bucket TEXT NOT NULL,
             key TEXT NOT NULL,
@@ -221,8 +210,7 @@ def test_find_candidates_with_numeric_extension(tmp_path):
             local_checksum TEXT,
             etag TEXT
         )
-        """
-    )
+        """)
     conn.execute(
         "INSERT INTO files (bucket, key, size, local_checksum, etag) VALUES (?, ?, ?, ?, ?)",
         ("bucket1", "file.log.1", 600 * 1024 * 1024, "aaa", None),
