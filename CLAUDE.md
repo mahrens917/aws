@@ -42,3 +42,11 @@ S3 management toolkit. Four-phase resumable migration (scan → restore → sync
 - Do fix root causes—never bypass checks (`# noqa`, `# pylint: disable`, `# type: ignore`, `policy_guard: allow-*`, or threshold changes are off-limits).
 - Do keep secrets and generated artifacts out of git; rely on `.gitleaks.toml`/`ci_tools/config/*` for sanctioned patterns.
 - Do keep required docs current (`README.md`, `CLAUDE.md`, `docs/README.md`, package READMEs) and leave user edits intact.
+
+## Test Isolation
+- Tests must NEVER touch production resources. All test operations must be fully isolated:
+  - **Files**: Use `tmp_path` or temporary directories — never read, write, truncate, or delete files in production paths (e.g., `logs/`, `data/`, `config/`).
+  - **Redis**: Use mocks or a dedicated test Redis database — never publish, subscribe, or modify keys in the production Redis instance.
+  - **Databases**: Use test fixtures or in-memory databases — never connect to or modify production databases.
+  - **External services**: Mock all external API calls and network requests.
+- The root cause of production log loss was tests calling `_clear_logs()` against the real `logs/` directory. Monkeypatch paths to `tmp_path` in any test that touches the filesystem.
